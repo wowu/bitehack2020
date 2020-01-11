@@ -38,7 +38,7 @@ app.post('/create-room', function(req, res) {
     objectToReturn.topic = roomTopic
 
     var newRoomId = crypto.randomBytes(20).toString('hex');
-    objectToReturn.id = newRoomID
+    objectToReturn.id = newRoomId
     objectToReturn.usernames = []
     rooms.push(objectToReturn)
     res.end(JSON.stringify(objectToReturn));
@@ -60,9 +60,10 @@ io.on('connection', function(socket) {
                 res.end(JSON.stringify(room));
             }
         }
+
         res.end(JSON.stringify({
             status: 'error',
-            message: 'Room does not exists.'
+            message: 'Room does not exist.'
         }))
     })
     // socket.on('create', function(room) {
