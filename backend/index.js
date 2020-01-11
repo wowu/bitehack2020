@@ -129,8 +129,9 @@ io.on('connection', function(socket) {
                 for(var i = 0;i < room.ideas.length; i++){
                     if(room.ideas[i].id == ideaId){
                         var removedIdea = room.ideas.pop(i)
-
-                        io.to(userInRoom.socketId).emit('pushDeletedIdeaToUsers', removedIdea);
+                        for(var userInRoom of room.users){
+                            io.to(userInRoom.socketId).emit('pushDeletedIdeaToUsers', removedIdea);
+                        }
                         return;
                     }
                 }
