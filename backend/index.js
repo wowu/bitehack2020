@@ -22,14 +22,31 @@ MongoClient.connect(url, function(err, db) {
     if (err) throw err;
     console.log("Connected");
 
-    // fetching initial data
-    var dbo = db.db("mydb");
-    console.log('Fetching data from database...')
-    dbo.collection("rooms").find({}).toArray(function(err, roomsFromDatabase) {
-        if (err) throw err;
-        console.log('Fetching successful');
-        rooms = roomsFromDatabase
+    var dataFetched = false;
+    // fetching data
+    db.collectionNames(function(err, collections){
+        for(var collection of collections){
+            if(collection === 'rooms'){
+                console.log('Collection rooms already exists. Fetching data...');
+                var dbo = db.db("mydb");
+                dbo.collection("rooms").find({}).toArray(function(err, roomsFromDatabase) {
+                    if (err) throw err;
+                    console.log('Fetching successful');
+                    dataFetched = true;
+                    rooms = roomsFromDatabase
+                });
+            }
+        }
+        if(!dataFetched) {
+            console.log('Collection rooms doesn\'t exist. Creating one...')
+            dbo.createCollection("rooms", function(err, res) {
+                if (err) throw err;
+                console.log("Collection created.");
+                db.close();
+            });
+        }
     });
+    
     db.close();
 });
 
@@ -41,6 +58,9 @@ app.use(bodyParser.urlencoded({
 
 app.use(bodyParser.json());
 
+function getId(length){
+    return crypto.randomBytes(length).toString('hex');
+}
 
 app.post('/create-room', function(req, res) {
     var roomTopic = req.body.topic
@@ -51,7 +71,7 @@ app.post('/create-room', function(req, res) {
 
     objectToReturn.topic = roomTopic
 
-    var newRoomId = crypto.randomBytes(20).toString('hex');
+    var newRoomId = getId(5)
     objectToReturn.id = newRoomId
     objectToReturn.users = []
     objectToReturn.ideas = []
@@ -84,10 +104,16 @@ io.on('connection', function(socket) {
         }
         socket.emit('roomNotFound', {})
     })
+
     socket.on('newIdea', function({roomId, idea}) {
         console.log(`New idea in room ${roomId} - ${idea}`)
         for(var room of rooms){
             if(room.id == roomId) {
+                idea = {
+                    id: getId(5),
+                    idea,
+                    score: 0,
+                }
                 room.ideas.push(idea)
 
                 for(var userInRoom of room.users){
@@ -96,28 +122,22 @@ io.on('connection', function(socket) {
                 return;
             }
         }
-    })
+    });
+    socket.on('removeIdea', function({roomId, ideaId}) {
+        console.log(`Remove idea in room ${roomId} - ${ideaId}`)
+        for(var room of rooms){
+            if(room.id == roomId) {
+                for(var i = 0;i < room.ideas.length; i++){
+                    if(room.ideas[i].id == ideaId){
+                        var removedIdea = room.ideas.pop(i)
 
-    // socket.on('create', function(room) {
-    //     rooms.push(room);
-    //     socket.emit('updaterooms', rooms, socket.room);
-    // });
-
-    // socket.on('sendchat', function(data) {
-    //     io.sockets["in"](socket.room).emit('updatechat', socket.username, data);
-    // });
-
-    // socket.on('switchRoom', function(newroom) {
-    //     var oldroom;
-    //     oldroom = socket.room;
-    //     socket.leave(socket.room);
-    //     socket.join(newroom);
-    //     socket.emit('updatechat', 'SERVER', 'you have connected to ' + newroom);
-    //     socket.broadcast.to(oldroom).emit('updatechat', 'SERVER', socket.username + ' has left this room');
-    //     socket.room = newroom;
-    //     socket.broadcast.to(newroom).emit('updatechat', 'SERVER', socket.username + ' has joined this room');
-    //     socket.emit('updaterooms', rooms, newroom);
-    // });
+                        io.to(userInRoom.socketId).emit('pushDeletedIdeaToUsers', removedIdea);
+                        return;
+                    }
+                }
+            }
+        }
+    });
 
     socket.on('disconnect', function() {
         console.log(`User disconnected (${socket.id})`)
@@ -136,5 +156,5 @@ io.on('connection', function(socket) {
  });
 
  http.listen(5000, function(){
-    console.log('listening on *:5000');
+    console.log('Listening on *:5000');
   });
