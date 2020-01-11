@@ -8,13 +8,6 @@ var MongoClient = require('mongodb').MongoClient;
 var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
 
 
-MongoClient.connect(url, function(err, db) {
-    if (err) throw err;
-    console.log("Database created!");
-    db.close();
-});
-
-
 var crypto = require('crypto');
 const bodyParser = require("body-parser");
 
@@ -30,8 +23,9 @@ app.use(bodyParser.json());
 
 // room
 // - id
+// - ideas
 // - topic
-// - usernames
+// - users
 
 var rooms = [];
 
@@ -50,36 +44,49 @@ app.post('/create-room', function(req, res) {
 
     var newRoomId = crypto.randomBytes(20).toString('hex');
     objectToReturn.id = newRoomId
-    objectToReturn.usernames = []
+    objectToReturn.users = []
+    objectToReturn.ideas = []
 
     rooms.push(objectToReturn)
-
-    MongoClient.connect(url, function(err, db) {
-        if (err) throw err;
-        db.collection("rooms").insertOne(objectToReturn, function(err, res) {
-          if (err) throw err;
-          console.log("1 room inserted to database");
-          db.close();
-        });
-    });
-
+    console.log('room created ', objectToReturn)
     res.end(JSON.stringify(objectToReturn));
 })
 
 io.on('connection', function(socket) {
-    console.log('user connected')
+    console.log('new user connected')
 
-    socket.on('connectToRoom', function(roomAndUsername) {
-        var {roomId, username} = roomAndUsername
-
+    socket.on('connectToRoom', function({ roomId, username }) {
+        console.log(`connect to room ${roomId} as ${username}`)
+        var user = {
+            username: username,
+            socketId: socket.id
+        }
         for(let room of rooms){
             if(room.hash == roomId){
-                room.usernames.push(username);
-                io.sockets.emit('newUserConnected', username)
-                socket.emit('test', {})
+                room.users.push(user);
+                console.log(user)
+                for(let userInRoom of room.users){
+                    console.log(user)
+                    io.to(userInRoom.socketId).emit('newUserConnected', user)
+                }
+                
+                socket.emit('roomInfo', room)
             }
         }
     })
+    socket.on('newIdea', function({roomId, idea}) {
+        for(var room of rooms){
+            if(room.id == roomId) {
+                room.ideas.push(idea)
+
+                for(var userInRoom of room.users){
+                    io.to(userInRoom.socketId).emit('pushNewIdeaToUsers', idea)
+                }
+
+            }
+        }
+    })
+    
     // socket.on('create', function(room) {
     //     rooms.push(room);
     //     socket.emit('updaterooms', rooms, socket.room);
