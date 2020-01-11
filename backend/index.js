@@ -216,6 +216,24 @@ io.on('connection', function(socket) {
         }
     })
 
+    socket.on('downvoteIdea', function({roomId, ideaId}) {
+        for(var room of rooms){
+            if(room.id == roomId){
+                for(var idea of room.ideas){
+                    if(idea.id == ideaId){
+                        idea.score--;
+
+                        for(var userInRoom of room.users){
+                            io.to(userInRoom.socketId).emit('ideaDownvoted', ideaId);
+                        }
+
+                        return;
+                    }
+                }
+            }
+        }
+    })
+
     socket.on('disconnect', function() {
         console.log(`User disconnected (${socket.id})`)
         for(var i = 0; i < rooms.length;i++){
