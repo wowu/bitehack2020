@@ -2,6 +2,12 @@ var app = require('express')();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
+var mongoose = require('mongoose');
+var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
+mongoose.connect(url, {useNewUrlParser: true});
+var db = mongoose.connection;
+
+
 var crypto = require('crypto');
 const bodyParser = require("body-parser");
 
@@ -12,12 +18,33 @@ const bodyParser = require("body-parser");
 // - users
 var rooms = []
 
+var roomSchema = new mongoose.Schema({
+    id: String,
+    ideas: Array,
+    topic: String,
+    users: Array
+});
+
+var Room = mongoose.model('Room', roomSchema);
+
+// database
+console.log("Connecting to database...");
+db.on('error', function() {
+    console.error('Server unreachable!')
+});
+
+db.once('open', function() {
+    console.log("Connected");
+});
+
+
+
 
 // database
 // var MongoClient = require('mongodb').MongoClient;
 // var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
 
-console.log("Connecting to database...");
+
 // MongoClient.connect(url, function(err, db) {
 //     if (err) throw err;
 //     console.log("Connected");
@@ -128,7 +155,7 @@ io.on('connection', function(socket) {
             if(room.id == roomId) {
                 for(var i = 0;i < room.ideas.length; i++){
                     if(room.ideas[i].id == ideaId){
-                        var removedIdea = room.ideas.pop(i)
+                        var removedIdea = room.ideas.splice(i, 1)[0]
                         for(var userInRoom of room.users){
                             io.to(userInRoom.socketId).emit('pushDeletedIdeaToUsers', removedIdea);
                         }
@@ -144,7 +171,7 @@ io.on('connection', function(socket) {
         for(var i = 0; i < rooms.length;i++){
             for(var j = 0; j < rooms[i].users.length; j++){
                 if(rooms[i].users[j].socketId == socket.id){
-                    var deletedUser = rooms[i].users.pop(j)
+                    var deletedUser = rooms[i].users.splice(j, 1)[0]
 
                     for(var userInRoom in rooms[i].users){
                         io.to(userInRoom.socketId).emit('deleteUser', deletedUser)
