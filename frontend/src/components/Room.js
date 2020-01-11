@@ -8,12 +8,18 @@ class Room extends Component {
     super(props);
 
     this.roomId = props.match.params.id;
-    this.state = { ideas: [], ideaText: "", topic: "", mode: "insert" };
+    this.state = {
+      ideas: [],
+      ideaText: "",
+      topic: "",
+      mode: "insert",
+      loading: true
+    };
 
     this.socket = io("http://localhost:5000");
 
     this.socket.on("roomInfo", ({ ideas, topic, mode }) => {
-      this.setState({ ideas, topic, mode });
+      this.setState({ ideas, topic, mode, loading: false });
     });
 
     this.socket.on("pushNewIdeaToUsers", idea => {
@@ -82,81 +88,102 @@ class Room extends Component {
   }
 
   render() {
-    const { ideas, ideaText, topic, mode } = this.state;
+    const { ideas, ideaText, topic, mode, loading } = this.state;
 
     return (
-      <div>
-        <div className="container">
-          <div className="row">
-            <div className="col">
-              <h3>
-                Q:{" "}
-                <RIEInput
-                  value={topic}
-                  propName="topic"
-                  change={this.changeTopic.bind(this)}
-                  validate={string => string !== ""}
-                />
-              </h3>
+      <>
+        {loading ? (
+          <div>Loading...</div>
+        ) : (
+          <div>
+            <div className="container">
+              <div className="row">
+                <div className="col">
+                  <h3>
+                    Q:{" "}
+                    <RIEInput
+                      value={topic}
+                      propName="topic"
+                      change={this.changeTopic.bind(this)}
+                      validate={string => string !== ""}
+                    />
+                  </h3>
 
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    name="mode"
-                    value="insert"
-                    checked={mode == "insert"}
-                    onChange={this.handleModeChange.bind(this)}
-                  />
-                  Dodawanie
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="radio"
-                    name="mode"
-                    value="voting"
-                    checked={mode == "voting"}
-                    onChange={this.handleModeChange.bind(this)}
-                  />
-                  Komentowanie
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="radio"
-                    name="mode"
-                    value="block"
-                    checked={mode == "block"}
-                    onChange={this.handleModeChange.bind(this)}
-                  />
-                  Zablokuj
-                </label>
+                  <div>
+                    <label>
+                      <input
+                        type="radio"
+                        name="mode"
+                        value="insert"
+                        checked={mode === "insert"}
+                        onChange={this.handleModeChange.bind(this)}
+                      />
+                      Dodawanie
+                    </label>
+                    <br />
+                    <label>
+                      <input
+                        type="radio"
+                        name="mode"
+                        value="voting"
+                        checked={mode === "voting"}
+                        onChange={this.handleModeChange.bind(this)}
+                      />
+                      Głosowanie
+                    </label>
+                    <br />
+                    <label>
+                      <input
+                        type="radio"
+                        name="mode"
+                        value="block"
+                        checked={mode === "block"}
+                        onChange={this.handleModeChange.bind(this)}
+                      />
+                      Zablokuj
+                    </label>
+                  </div>
+
+                  <ul>
+                    {ideas.map(idea => (
+                      <li key={idea.id}>
+                        {idea.idea}{" "}
+                        <button onClick={() => this.removeIdea(idea)}>X</button>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {mode === "insert" && (
+                    <form onSubmit={this.handleFormSubmit.bind(this)}>
+                      <div className="input-group">
+                        <input
+                          className="form-control"
+                          type="text"
+                          placeholder="Wpisz pomysł"
+                          value={ideaText}
+                          onChange={e =>
+                            this.setState({ ideaText: e.target.value })
+                          }
+                          style={{
+                            borderTopLeftRadius: "1.078em",
+                            borderBottomLeftRadius: "1.078em"
+                          }}
+                        />
+
+                        <div className="input-group-append">
+                          <button className="btn btn-primary">
+                            Dodaj pomysł
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  )}
+                </div>
               </div>
-
-              <ul>
-                {ideas.map(idea => (
-                  <li key={idea.id}>
-                    {idea.idea}{" "}
-                    <button onClick={() => this.removeIdea(idea)}>X</button>
-                  </li>
-                ))}
-              </ul>
-
-              <form onSubmit={this.handleFormSubmit.bind(this)}>
-                <input
-                  type="text"
-                  placeholder="Wpisz pomysł"
-                  value={ideaText}
-                  onChange={e => this.setState({ ideaText: e.target.value })}
-                />
-
-                <button>Dodaj pomysł</button>
-              </form>
             </div>
           </div>
-        </div>
-      </div>
+        )}
+      </>
     );
   }
 }
