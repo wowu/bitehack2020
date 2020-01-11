@@ -15,7 +15,13 @@ app.use(bodyParser.json());
 var usernames = {};
 
 
-// room = {'name': 'Room name', 'hash', 'asdfsr4ewfw34dss=='}
+// room = {'topic': 'Room name', 'id', 'asdfsr4ewfw34dss=='}
+
+// room
+// - id
+// - topic
+// - usernames
+
 var rooms = [];
 
 app.get('/', function(req, res){
@@ -23,25 +29,17 @@ app.get('/', function(req, res){
 });
 
 app.post('/create-room', function(req, res) {
-    var roomName = req.body.name
+    var roomTopic = req.body.topic
 
     var objectToReturn = {}
 
     res.setHeader('Content-Type', 'application/json');
 
-    for(room of rooms){
-        if(room.name === roomName){
-            objectToReturn.status = 'error'
-            objectToReturn.message = 'Room with this name already exists.'
-            res.end(JSON.stringify(objectToReturn));
-            return
-        }
-    }
-    objectToReturn.name = roomName
+    objectToReturn.topic = roomTopic
 
-    var newRoomID = crypto.randomBytes(20).toString('hex');
-    objectToReturn.hash = newRoomID
-
+    var newRoomId = crypto.randomBytes(20).toString('hex');
+    objectToReturn.id = newRoomID
+    objectToReturn.usernames = []
     rooms.push(objectToReturn)
     res.end(JSON.stringify(objectToReturn));
 })
@@ -49,6 +47,24 @@ app.post('/create-room', function(req, res) {
 io.on('connection', function(socket) {
     console.log('user connected')
 
+    socket.on('connectToRoom', function(roomId, username) {
+
+        res.setHeader('Content-Type', 'application/json');
+
+        for(let room of rooms){
+            if(room.hash == roomId){
+                room.usernames.push(username);
+
+                socker.emit('newUserConnected', username)
+
+                res.end(JSON.stringify(room));
+            }
+        }
+        res.end(JSON.stringify({
+            status: 'error',
+            message: 'Room does not exists.'
+        }))
+    })
     // socket.on('create', function(room) {
     //     rooms.push(room);
     //     socket.emit('updaterooms', rooms, socket.room);
