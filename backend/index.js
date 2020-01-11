@@ -93,12 +93,12 @@ io.on('connection', function(socket) {
         }
         Room.findOne({id: roomId}, function(err, room){
 
-            this.users.push(user);
-            for(let userInRoom of this.users){
+            room.users.push(user);
+            for(let userInRoom of room.users){
                 io.to(userInRoom.socketId).emit('newUserConnected', user);
             }
-            socket.emit('roomInfo', this);
-            this.save()
+            socket.emit('roomInfo', room);
+            room.save()
         })
         
         socket.emit('roomNotFound', {})
