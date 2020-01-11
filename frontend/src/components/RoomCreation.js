@@ -8,10 +8,12 @@ const RoomCreation = () => {
   const [brainstormTopic, setBrainstormTopic] = useState("");
   const history = useHistory();
 
-  const handleCreateRoom = async () => {
+  const handleCreateRoom = async e => {
+    e.preventDefault();
+
     try {
       const response = await axios.post("/create-room", {
-        topic: brainstormTopic === "" ? "Sample question?" : brainstormTopic
+        topic: brainstormTopic === "" ? "No name" : brainstormTopic
       });
 
       const roomId = response.data.id;
@@ -51,24 +53,31 @@ const RoomCreation = () => {
       </div>
       <div className="row justify-content-center">
         <div className="col-md-6">
-          <div className="input-group">
-            <input
-              className="form-control"
-              type="text"
-              value={brainstormTopic}
-              onChange={e => setBrainstormTopic(e.target.value)}
-              placeholder="What problem do you want to solve?"
-              style={{
-                borderTopLeftRadius: "1.078em",
-                borderBottomLeftRadius: "1.078em"
-              }}
-            />
+          <form onSubmit={handleCreateRoom}>
+            <div className="input-group">
+              <input
+                className="form-control"
+                type="text"
+                value={brainstormTopic}
+                onChange={e => setBrainstormTopic(e.target.value)}
+                placeholder="What problem do you want to solve?"
+                style={{
+                  borderTopLeftRadius: "1.078em",
+                  borderBottomLeftRadius: "1.078em"
+                }}
+              />
 
-            <div className="input-group-append">
-              <button className="btn btn-primary" onClick={handleCreateRoom}>
-                Create room
-              </button>
+              <div className="input-group-append">
+                <button className="btn btn-primary">Create room</button>
+              </div>
             </div>
+          </form>
+        </div>
+      </div>
+      <div className="row mt-5">
+        <div className="col mt-5">
+          <div className="text-center mt-5">
+            Created by Random Dudes at BiteHack 2020
           </div>
         </div>
       </div>

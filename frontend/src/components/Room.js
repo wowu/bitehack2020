@@ -3,6 +3,9 @@ import io from "socket.io-client";
 import { withRouter } from "react-router-dom";
 import { RIEInput } from "riek";
 
+import Card from "./Card";
+import KanbanImg from "../assets/kanban.png";
+
 class Room extends Component {
   constructor(props) {
     super(props);
@@ -18,7 +21,8 @@ class Room extends Component {
       ideaText: "",
       topic: "",
       mode: "insert",
-      loading: true
+      loading: true,
+      userIdeaCount: 0
     };
 
     this.socket = io("http://localhost:5000");
@@ -75,13 +79,16 @@ class Room extends Component {
   }
 
   publishIdea() {
+    if (this.state.ideaText === "") return;
+
     this.socket.emit("newIdea", {
       roomId: this.roomId,
       idea: this.state.ideaText
     });
 
     this.setState({
-      ideaText: ""
+      ideaText: "",
+      userIdeaCount: this.state.userIdeaCount + 1
     });
   }
 
@@ -118,8 +125,7 @@ class Room extends Component {
             <div className="container">
               <div className="row">
                 <div className="col">
-                  <h3>
-                    Q:{" "}
+                  <h3 className="mt-4 text-center">
                     {master ? (
                       <RIEInput
                         value={topic}
@@ -133,65 +139,83 @@ class Room extends Component {
                   </h3>
 
                   {master && (
-                    <div>
-                      <label>
-                        <input
-                          type="radio"
-                          name="mode"
-                          value="insert"
-                          checked={mode === "insert"}
-                          onChange={this.handleModeChange.bind(this)}
-                        />
-                        Dodawanie
-                      </label>
-                      <br />
-                      <label>
-                        <input
-                          type="radio"
-                          name="mode"
-                          value="voting"
-                          checked={mode === "voting"}
-                          onChange={this.handleModeChange.bind(this)}
-                        />
-                        Głosowanie
-                      </label>
-                      <br />
-                      <label>
-                        <input
-                          type="radio"
-                          name="mode"
-                          value="block"
-                          checked={mode === "block"}
-                          onChange={this.handleModeChange.bind(this)}
-                        />
-                        Zablokuj
-                      </label>
+                    <div className="text-center">
+                      <div className="form-check form-check-inline">
+                        Select mode:
+                      </div>
+
+                      <div className="form-check form-check-inline">
+                        <label>
+                          <input
+                            type="radio"
+                            className="mr-1"
+                            name="mode"
+                            value="insert"
+                            checked={mode === "insert"}
+                            onChange={this.handleModeChange.bind(this)}
+                          />
+                          Brainstorm
+                        </label>
+                      </div>
+                      <div className="form-check form-check-inline">
+                        <label class="form-check-inline">
+                          <input
+                            type="radio"
+                            className="mr-1"
+                            name="mode"
+                            value="voting"
+                            checked={mode === "voting"}
+                            onChange={this.handleModeChange.bind(this)}
+                          />
+                          Voting
+                        </label>
+                      </div>
+                      <div className="form-check form-check-inline">
+                        <label class="form-check-inline">
+                          <input
+                            type="radio"
+                            className="mr-1"
+                            name="mode"
+                            value="block"
+                            checked={mode === "block"}
+                            onChange={this.handleModeChange.bind(this)}
+                          />
+                          Conclusions
+                        </label>
+                      </div>
                     </div>
                   )}
 
-                  <ul>
-                    {ideas.map(idea => (
-                      <li key={idea.id}>
-                        {idea.idea} Votez: {idea.score}
-                        {master && (
-                          <button onClick={() => this.removeIdea(idea)}>
-                            X
-                          </button>
-                        )}
-                        {mode === "voting" && (
-                          <button onClick={() => this.upvote(idea)}>/\</button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
+                  {(master || mode === "voting") && (
+                    <div>
+                      {mode === "voting" && (
+                        <h5 className="text-center">
+                          Now vote for 3 best ideas
+                        </h5>
+                      )}
+                      {ideas.map(idea => (
+                        <Card
+                          key={idea.id}
+                          idea={idea}
+                          onRemove={() => this.removeIdea(idea)}
+                          onUpvote={() => this.upvote(idea)}
+                          mode={mode}
+                          master={master}
+                        />
+                      ))}
+                    </div>
+                  )}
 
                   {mode === "insert" && (
-                    <form onSubmit={this.handleFormSubmit.bind(this)}>
+                    <form
+                      className="mt-4"
+                      onSubmit={this.handleFormSubmit.bind(this)}
+                    >
                       <div className="input-group">
                         <input
                           className="form-control"
                           type="text"
-                          placeholder="Wpisz pomysł"
+                          placeholder="Your idea..."
                           value={ideaText}
                           onChange={e =>
                             this.setState({ ideaText: e.target.value })
@@ -203,12 +227,28 @@ class Room extends Component {
                         />
 
                         <div className="input-group-append">
-                          <button className="btn btn-primary">
-                            Dodaj pomysł
-                          </button>
+                          <button className="btn btn-primary">Send!</button>
                         </div>
                       </div>
+                      <div className="text-muted text-center mt-1">
+                        {this.state.userIdeaCount > 0 && (
+                          <>
+                            You sent {this.state.userIdeaCount} idea
+                            {this.state.userIdeaCount > 1 && "s"}! Good work!
+                          </>
+                        )}
+                      </div>
                     </form>
+                  )}
+
+                  {!master && mode === "block" && (
+                    <div className="mt-5 d-flex flex-column align-items-center">
+                      <img
+                        style={{ maxWidth: 300, widht: "100%" }}
+                        src={KanbanImg}
+                      />
+                      <h3 className="text-center">Thanks for participation!</h3>
+                    </div>
                   )}
                 </div>
               </div>
