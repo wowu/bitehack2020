@@ -1,8 +1,22 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useHistory } from "react-router-dom";
+import axios from "axios";
 
 const RoomCreation = () => {
   const [brainstormTopic, setBrainstormTopic] = useState("");
+  const history = useHistory();
+
+  const handleCreateRoom = async () => {
+    try {
+      const response = await axios.post("/create-room", {
+        topic: brainstormTopic
+      });
+
+      history.push(`/room/${response.data.id}`);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div className="container">
@@ -12,11 +26,10 @@ const RoomCreation = () => {
             type="text"
             value={brainstormTopic}
             onChange={e => setBrainstormTopic(e.target.value)}
+            placeholder="Topic"
           />
 
-          <Link to="/room/xD" className="btn btn-primary">
-            Create room
-          </Link>
+          <button onClick={handleCreateRoom}>Create room</button>
         </div>
       </div>
     </div>
