@@ -1,16 +1,19 @@
-import React, { useState, useEffect, Component } from "react";
+import React, { Component } from "react";
 import io from "socket.io-client";
+import { withRouter } from "react-router-dom";
+import { RIEInput } from "riek";
 
-export default class Room extends Component {
+class Room extends Component {
   constructor(props) {
     super(props);
+
     this.roomId = props.match.params.id;
-    this.state = { ideas: [], ideaText: "", topic: "" };
+    this.state = { ideas: [], ideaText: "", topic: "", mode: "insert" };
 
     this.socket = io("http://localhost:5000");
 
-    this.socket.on("roomInfo", ({ ideas, topic }) => {
-      this.setState({ ideas, topic });
+    this.socket.on("roomInfo", ({ ideas, topic, mode }) => {
+      this.setState({ ideas, topic, mode });
     });
 
     this.socket.on("pushNewIdeaToUsers", idea => {
@@ -19,15 +22,23 @@ export default class Room extends Component {
       });
     });
 
+    this.socket.on("roomModeChanged", mode => {
+      console.log(mode);
+      this.setState({ mode });
+    });
+
     this.socket.on("pushDeletedIdeaToUsers", idea => {
-      console.log("DELETED IDEA:", idea);
       this.setState({
         ideas: this.state.ideas.filter(({ id }) => id !== idea.id)
       });
     });
 
+    this.socket.on("topicChanged", topic => {
+      this.setState({ topic });
+    });
+
     this.socket.on("roomNotFound", data => {
-      console.error("Room not found");
+      this.props.history.push("/");
     });
 
     this.socket.emit("connectToRoom", {
@@ -37,7 +48,6 @@ export default class Room extends Component {
   }
 
   removeIdea(idea) {
-    console.log("IDEA TO REMOVE: ", idea);
     this.socket.emit("removeIdea", {
       roomId: this.roomId,
       ideaId: idea.id
@@ -55,20 +65,74 @@ export default class Room extends Component {
     });
   }
 
+  changeTopic({ topic }) {
+    this.socket.emit("changeTopic", { roomId: this.roomId, topic });
+  }
+
   handleFormSubmit(e) {
     e.preventDefault();
     this.publishIdea();
   }
 
+  handleModeChange(e) {
+    this.socket.emit("changeRoomMode", {
+      roomId: this.roomId,
+      newMode: e.target.value
+    });
+  }
+
   render() {
-    const { ideas, ideaText, topic } = this.state;
+    const { ideas, ideaText, topic, mode } = this.state;
 
     return (
       <div>
         <div className="container">
           <div className="row">
             <div className="col">
-              <h3>Q: {topic}</h3>
+              <h3>
+                Q:{" "}
+                <RIEInput
+                  value={topic}
+                  propName="topic"
+                  change={this.changeTopic.bind(this)}
+                  validate={string => string !== ""}
+                />
+              </h3>
+
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="insert"
+                    checked={mode == "insert"}
+                    onChange={this.handleModeChange.bind(this)}
+                  />
+                  Dodawanie
+                </label>
+                <br />
+                <label>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="voting"
+                    checked={mode == "voting"}
+                    onChange={this.handleModeChange.bind(this)}
+                  />
+                  Komentowanie
+                </label>
+                <br />
+                <label>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="block"
+                    checked={mode == "block"}
+                    onChange={this.handleModeChange.bind(this)}
+                  />
+                  Zablokuj
+                </label>
+              </div>
 
               <ul>
                 {ideas.map(idea => (
@@ -96,3 +160,5 @@ export default class Room extends Component {
     );
   }
 }
+
+export default withRouter(Room);
