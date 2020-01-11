@@ -8,6 +8,11 @@ class Room extends Component {
     super(props);
 
     this.roomId = props.match.params.id;
+
+    this.masterOf = JSON.parse(window.localStorage.getItem("masterOf"));
+
+    this.master = this.masterOf && this.masterOf.indexOf(this.roomId) !== -1;
+
     this.state = {
       ideas: [],
       ideaText: "",
@@ -44,7 +49,16 @@ class Room extends Component {
     });
 
     this.socket.on("roomNotFound", data => {
+      console.error("Room not found");
       this.props.history.push("/");
+    });
+
+    this.socket.on("ideaUpvoted", newIdea => {
+      this.setState({
+        ideas: this.state.ideas.map(idea =>
+          idea.id === newIdea.id ? newIdea : idea
+        )
+      });
     });
 
     this.socket.emit("connectToRoom", {
@@ -87,8 +101,13 @@ class Room extends Component {
     });
   }
 
+  upvote(idea) {
+    this.socket.emit("upvoteIdea", { roomId: this.roomId, ideaId: idea.id });
+  }
+
   render() {
     const { ideas, ideaText, topic, mode, loading } = this.state;
+    const master = this.master;
 
     return (
       <>
@@ -101,54 +120,67 @@ class Room extends Component {
                 <div className="col">
                   <h3>
                     Q:{" "}
-                    <RIEInput
-                      value={topic}
-                      propName="topic"
-                      change={this.changeTopic.bind(this)}
-                      validate={string => string !== ""}
-                    />
+                    {master ? (
+                      <RIEInput
+                        value={topic}
+                        propName="topic"
+                        change={this.changeTopic.bind(this)}
+                        validate={string => string !== ""}
+                      />
+                    ) : (
+                      topic
+                    )}
                   </h3>
 
-                  <div>
-                    <label>
-                      <input
-                        type="radio"
-                        name="mode"
-                        value="insert"
-                        checked={mode === "insert"}
-                        onChange={this.handleModeChange.bind(this)}
-                      />
-                      Dodawanie
-                    </label>
-                    <br />
-                    <label>
-                      <input
-                        type="radio"
-                        name="mode"
-                        value="voting"
-                        checked={mode === "voting"}
-                        onChange={this.handleModeChange.bind(this)}
-                      />
-                      Głosowanie
-                    </label>
-                    <br />
-                    <label>
-                      <input
-                        type="radio"
-                        name="mode"
-                        value="block"
-                        checked={mode === "block"}
-                        onChange={this.handleModeChange.bind(this)}
-                      />
-                      Zablokuj
-                    </label>
-                  </div>
+                  {master && (
+                    <div>
+                      <label>
+                        <input
+                          type="radio"
+                          name="mode"
+                          value="insert"
+                          checked={mode === "insert"}
+                          onChange={this.handleModeChange.bind(this)}
+                        />
+                        Dodawanie
+                      </label>
+                      <br />
+                      <label>
+                        <input
+                          type="radio"
+                          name="mode"
+                          value="voting"
+                          checked={mode === "voting"}
+                          onChange={this.handleModeChange.bind(this)}
+                        />
+                        Głosowanie
+                      </label>
+                      <br />
+                      <label>
+                        <input
+                          type="radio"
+                          name="mode"
+                          value="block"
+                          checked={mode === "block"}
+                          onChange={this.handleModeChange.bind(this)}
+                        />
+                        Zablokuj
+                      </label>
+                    </div>
+                  )}
 
                   <ul>
                     {ideas.map(idea => (
                       <li key={idea.id}>
-                        {idea.idea}{" "}
-                        <button onClick={() => this.removeIdea(idea)}>X</button>
+                        {idea.idea} Votez: {idea.score}
+                        {master && (
+                          <button onClick={() => this.removeIdea(idea)}>
+                            X
+                          </button>
+                        )}
+                        {mode === "voting" && (
+                          <button onClick={() => this.upvote(idea)}>/\</button>
+                        )}
                       </li>
                     ))}
                   </ul>

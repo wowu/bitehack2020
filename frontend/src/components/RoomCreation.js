@@ -14,7 +14,17 @@ const RoomCreation = () => {
         topic: brainstormTopic === "" ? "Sample question?" : brainstormTopic
       });
 
-      history.push(`/room/${response.data.id}`);
+      const roomId = response.data.id;
+
+      const masterOf =
+        JSON.parse(window.localStorage.getItem("masterOf")) || [];
+
+      window.localStorage.setItem(
+        "masterOf",
+        JSON.stringify([roomId, ...masterOf])
+      );
+
+      history.push(`/room/${roomId}`);
     } catch (e) {
       console.error(e);
     }
