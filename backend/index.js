@@ -91,7 +91,8 @@ io.on('connection', function(socket) {
             username: username,
             socketId: socket.id
         }
-        Room.find({id: roomId}, function(){
+        Room.findOne({id: roomId}, function(err, room){
+
             this.users.push(user);
             for(let userInRoom of this.users){
                 io.to(userInRoom.socketId).emit('newUserConnected', user);
