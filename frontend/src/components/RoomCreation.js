@@ -11,7 +11,7 @@ const RoomCreation = () => {
   const handleCreateRoom = async () => {
     try {
       const response = await axios.post("/create-room", {
-        topic: brainstormTopic
+        topic: brainstormTopic === "" ? "Sample question?" : brainstormTopic
       });
 
       history.push(`/room/${response.data.id}`);
