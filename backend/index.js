@@ -14,41 +14,41 @@ var rooms = []
 
 
 // database
-var MongoClient = require('mongodb').MongoClient;
-var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
+// var MongoClient = require('mongodb').MongoClient;
+// var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
 
 console.log("Connecting to database...");
-MongoClient.connect(url, function(err, db) {
-    if (err) throw err;
-    console.log("Connected");
+// MongoClient.connect(url, function(err, db) {
+//     if (err) throw err;
+//     console.log("Connected");
 
-    var dataFetched = false;
-    // fetching data
-    db.collectionNames(function(err, collections){
-        for(var collection of collections){
-            if(collection === 'rooms'){
-                console.log('Collection rooms already exists. Fetching data...');
-                var dbo = db.db("mydb");
-                dbo.collection("rooms").find({}).toArray(function(err, roomsFromDatabase) {
-                    if (err) throw err;
-                    console.log('Fetching successful');
-                    dataFetched = true;
-                    rooms = roomsFromDatabase
-                });
-            }
-        }
-        if(!dataFetched) {
-            console.log('Collection rooms doesn\'t exist. Creating one...')
-            dbo.createCollection("rooms", function(err, res) {
-                if (err) throw err;
-                console.log("Collection created.");
-                db.close();
-            });
-        }
-    });
+//     var dataFetched = false;
+//     // fetching data
+//     db.collectionNames(function(err, collections){
+//         for(var collection of collections){
+//             if(collection === 'rooms'){
+//                 console.log('Collection rooms already exists. Fetching data...');
+//                 var dbo = db.db("mydb");
+//                 dbo.collection("rooms").find({}).toArray(function(err, roomsFromDatabase) {
+//                     if (err) throw err;
+//                     console.log('Fetching successful');
+//                     dataFetched = true;
+//                     rooms = roomsFromDatabase
+//                 });
+//             }
+//         }
+//         if(!dataFetched) {
+//             console.log('Collection rooms doesn\'t exist. Creating one...')
+//             dbo.createCollection("rooms", function(err, res) {
+//                 if (err) throw err;
+//                 console.log("Collection created.");
+//                 db.close();
+//             });
+//         }
+//     });
     
-    db.close();
-});
+//     db.close();
+// });
 
 
 // POST args config
@@ -104,7 +104,6 @@ io.on('connection', function(socket) {
         }
         socket.emit('roomNotFound', {})
     })
-
     socket.on('newIdea', function({roomId, idea}) {
         console.log(`New idea in room ${roomId} - ${idea}`)
         for(var room of rooms){
