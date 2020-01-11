@@ -1,59 +1,49 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect, Component } from "react";
 import io from "socket.io-client";
 
-const RoomCreation = () => {
-  const { id } = useParams();
-  const [idea, setIdea] = useState("");
+export default class Room extends Component {
+  constructor(props) {
+    super(props);
+    this.roomId = props.match.params.id;
+    this.state = { ideas: [], idea: "" };
 
-  const [ideas, setIdeas] = useState([]);
-
-  useEffect(() => {
-    const socket = io("http://localhost:5000");
-
-    socket.emit("connectToRoom", {
-      roomId: id,
-      userName: "asd"
+    this.socket = io("http://localhost:5000");
+    this.socket.emit("connectToRoom", {
+      roomId: this.roomId,
+      userName: "userName"
     });
-
-    socket.on("test", data => {
-      console.log("foo");
+  }
+  publishIdea() {
+    this.socket.emit("newIdea", {
+      roomId: this.roomId,
+      idea: this.state.idea
     });
-
-    return () => {
-      socket.close();
-    };
-  }, []);
-
-  const publishIdea = () => {
-    setIdeas([idea, ...ideas]);
-    socket.emit("selectRoom", {
-      roomId: id,
-      userName: `userName:${(Math.random() * 10) | 0}`
+    this.setState({
+      ideas: [...this.state.ideas, this.state.idea],
+      idea: ""
     });
-    setIdea("");
-  };
+  }
+  render() {
+    const { id, ideas, idea } = this.state;
+    return (
+      <div>
+        <h3>Brainstorm: {id}</h3>
 
-  return (
-    <div>
-      <h3>Brainstorm: {id}</h3>
+        <ul>
+          {ideas.map(idea => (
+            <li>{idea}</li>
+          ))}
+        </ul>
 
-      <ul>
-        {ideas.map(idea => (
-          <li>{idea}</li>
-        ))}
-      </ul>
+        <input
+          type="text"
+          placeholder="Wpisz pomysł"
+          value={idea}
+          onChange={e => this.setState({ idea: e.target.value })}
+        />
 
-      <input
-        type="text"
-        placeholder="Wpisz pomysł"
-        value={idea}
-        onChange={e => setIdea(e.target.value)}
-      />
-
-      <button onClick={publishIdea}>Dodaj pomysł</button>
-    </div>
-  );
-};
-
-export default RoomCreation;
+        <button onClick={this.publishIdea.bind(this)}>Dodaj pomysł</button>
+      </div>
+    );
+  }
+}
