@@ -8,41 +8,68 @@ export default class Room extends Component {
     this.state = { ideas: [], idea: "" };
 
     this.socket = io("http://localhost:5000");
+
+    this.socket.on("roomInfo", data => {
+      this.setState({ ideas: data.ideas });
+      console.log(data);
+    });
+
+    this.socket.on("pushNewIdeaToUsers", idea => {
+      this.addIdea(idea);
+    });
+
+    this.socket.on("roomNotFound", data => {});
+
     this.socket.emit("connectToRoom", {
       roomId: this.roomId,
       userName: "userName"
     });
   }
+
+  addIdea(idea) {
+    this.setState({
+      ideas: [...this.state.ideas, idea]
+    });
+  }
+
   publishIdea() {
     this.socket.emit("newIdea", {
       roomId: this.roomId,
       idea: this.state.idea
     });
+
     this.setState({
-      ideas: [...this.state.ideas, this.state.idea],
       idea: ""
     });
   }
+
+  handleFormSubmit(e) {
+    e.preventDefault();
+    this.publishIdea();
+  }
+
   render() {
-    const { id, ideas, idea } = this.state;
+    const { ideas, idea } = this.state;
     return (
       <div>
-        <h3>Brainstorm: {id}</h3>
+        <h3>Brainstorm: {this.roomId}</h3>
 
         <ul>
           {ideas.map(idea => (
-            <li>{idea}</li>
+            <li key={idea}>{idea}</li>
           ))}
         </ul>
 
-        <input
-          type="text"
-          placeholder="Wpisz pomysł"
-          value={idea}
-          onChange={e => this.setState({ idea: e.target.value })}
-        />
+        <form onSubmit={this.handleFormSubmit.bind(this)}>
+          <input
+            type="text"
+            placeholder="Wpisz pomysł"
+            value={idea}
+            onChange={e => this.setState({ idea: e.target.value })}
+          />
 
-        <button onClick={this.publishIdea.bind(this)}>Dodaj pomysł</button>
+          <button>Dodaj pomysł</button>
+        </form>
       </div>
     );
   }
