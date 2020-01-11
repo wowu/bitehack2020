@@ -5,7 +5,7 @@ export default class Room extends Component {
   constructor(props) {
     super(props);
     this.roomId = props.match.params.id;
-    this.state = { ideas: [], idea: "", topic: "" };
+    this.state = { ideas: [], ideaText: "", topic: "" };
 
     this.socket = io("http://localhost:5000");
 
@@ -14,10 +14,21 @@ export default class Room extends Component {
     });
 
     this.socket.on("pushNewIdeaToUsers", idea => {
-      this.addIdea(idea);
+      this.setState({
+        ideas: [...this.state.ideas, idea]
+      });
     });
 
-    this.socket.on("roomNotFound", data => {});
+    this.socket.on("pushDeletedIdeaToUsers", idea => {
+      console.log("DELETED IDEA:", idea);
+      this.setState({
+        ideas: this.state.ideas.filter(({ id }) => id !== idea.id)
+      });
+    });
+
+    this.socket.on("roomNotFound", data => {
+      console.error("Room not found");
+    });
 
     this.socket.emit("connectToRoom", {
       roomId: this.roomId,
@@ -25,20 +36,22 @@ export default class Room extends Component {
     });
   }
 
-  addIdea(idea) {
-    this.setState({
-      ideas: [...this.state.ideas, idea]
+  removeIdea(idea) {
+    console.log("IDEA TO REMOVE: ", idea);
+    this.socket.emit("removeIdea", {
+      roomId: this.roomId,
+      ideaId: idea.id
     });
   }
 
   publishIdea() {
     this.socket.emit("newIdea", {
       roomId: this.roomId,
-      idea: this.state.idea
+      idea: this.state.ideaText
     });
 
     this.setState({
-      idea: ""
+      ideaText: ""
     });
   }
 
@@ -48,7 +61,7 @@ export default class Room extends Component {
   }
 
   render() {
-    const { ideas, idea, topic } = this.state;
+    const { ideas, ideaText, topic } = this.state;
 
     return (
       <div>
@@ -59,7 +72,10 @@ export default class Room extends Component {
 
               <ul>
                 {ideas.map(idea => (
-                  <li key={idea}>{idea}</li>
+                  <li key={idea.id}>
+                    {idea.idea}{" "}
+                    <button onClick={() => this.removeIdea(idea)}>X</button>
+                  </li>
                 ))}
               </ul>
 
@@ -67,8 +83,8 @@ export default class Room extends Component {
                 <input
                   type="text"
                   placeholder="Wpisz pomysł"
-                  value={idea}
-                  onChange={e => this.setState({ idea: e.target.value })}
+                  value={ideaText}
+                  onChange={e => this.setState({ ideaText: e.target.value })}
                 />
 
                 <button>Dodaj pomysł</button>
