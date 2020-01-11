@@ -106,6 +106,7 @@ app.post('/create-room', function(req, res) {
     objectToReturn.id = newRoomId
     objectToReturn.users = []
     objectToReturn.ideas = []
+    objectToReturn.mode = 'insert'
 
     rooms.push(objectToReturn)
     console.log(`Room created ${JSON.stringify(objectToReturn, null, 4)}`)
@@ -144,6 +145,20 @@ io.on('connection', function(socket) {
                 room.topic = topic;
                 for(var userInRoom of room.users){
                     io.to(userInRoom.socketId).emit('topicChanged', topic);
+                }
+                return;
+            }
+        }
+    })
+    socket.on('changeRoomMode', function({roomId, newMode}) {
+        console.log(`Changing room (${roomId}) mode to ${newMode}`)
+
+        for(var room of rooms){
+            if(room.id == roomId) {
+                room.mode = newMode;
+
+                for(var userInRoom of room.users){
+                    io.to(userInRoom.socketId).emit('roomModeChanged', newMode);
                 }
                 return;
             }
@@ -193,7 +208,7 @@ io.on('connection', function(socket) {
                         for(var userInRoom of room.users){
                             io.to(userInRoom.socketId).emit('ideaUpvoted', ideaId);
                         }
-                        
+
                         return;
                     }
                 }
