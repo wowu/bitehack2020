@@ -2,6 +2,19 @@ var app = require('express')();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
+
+// database
+var MongoClient = require('mongodb').MongoClient;
+var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
+
+
+MongoClient.connect(url, function(err, db) {
+    if (err) throw err;
+    console.log("Database created!");
+    db.close();
+});
+
+
 var crypto = require('crypto');
 const bodyParser = require("body-parser");
 
@@ -11,8 +24,6 @@ app.use(bodyParser.urlencoded({
 
 app.use(bodyParser.json());
 
-
-var usernames = {};
 
 
 // room = {'topic': 'Room name', 'id', 'asdfsr4ewfw34dss=='}
@@ -40,31 +51,34 @@ app.post('/create-room', function(req, res) {
     var newRoomId = crypto.randomBytes(20).toString('hex');
     objectToReturn.id = newRoomId
     objectToReturn.usernames = []
+
     rooms.push(objectToReturn)
+
+    MongoClient.connect(url, function(err, db) {
+        if (err) throw err;
+        db.collection("rooms").insertOne(objectToReturn, function(err, res) {
+          if (err) throw err;
+          console.log("1 room inserted to database");
+          db.close();
+        });
+    });
+
     res.end(JSON.stringify(objectToReturn));
 })
 
 io.on('connection', function(socket) {
     console.log('user connected')
 
-    socket.on('connectToRoom', function(roomId, username) {
-
-        res.setHeader('Content-Type', 'application/json');
+    socket.on('connectToRoom', function(roomAndUsername) {
+        var {roomId, username} = roomAndUsername
 
         for(let room of rooms){
             if(room.hash == roomId){
                 room.usernames.push(username);
-
-                socker.emit('newUserConnected', username)
-
-                res.end(JSON.stringify(room));
+                io.sockets.emit('newUserConnected', username)
+                socket.emit('test', {})
             }
         }
-
-        res.end(JSON.stringify({
-            status: 'error',
-            message: 'Room does not exist.'
-        }))
     })
     // socket.on('create', function(room) {
     //     rooms.push(room);
