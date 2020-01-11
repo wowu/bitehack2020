@@ -25,7 +25,11 @@ class Room extends Component {
       userIdeaCount: 0
     };
 
-    this.socket = io("http://localhost:5000");
+    this.socket = io(
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:3000"
+        : "https://bitehack.grzegorzpach.pl"
+    );
 
     this.socket.on("roomInfo", ({ ideas, topic, mode }) => {
       this.setState({ ideas, topic, mode, loading: false });

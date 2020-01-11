@@ -13,7 +13,7 @@ const RoomCreation = () => {
 
     try {
       const response = await axios.post("/create-room", {
-        topic: brainstormTopic === "" ? "No name" : brainstormTopic
+        topic: brainstormTopic === "" ? "Untitled brainstorm" : brainstormTopic
       });
 
       const roomId = response.data.id;
