@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
+import io from "socket.io-client";
 
 const RoomCreation = () => {
   const { id } = useParams();
   const [idea, setIdea] = useState("");
 
   const [ideas, setIdeas] = useState([]);
+  const socket = io("http://localhost:3000");
 
   const publishIdea = () => {
     setIdeas([idea, ...ideas]);
