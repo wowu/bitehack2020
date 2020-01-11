@@ -24,6 +24,9 @@ var roomSchema = new mongoose.Schema({
     topic: String,
     users: Array
 });
+roomSchema.methods.changeTopic = function(newTopic) {
+    this.topic = newTopic
+}
 
 var Room = mongoose.model('Room', roomSchema);
 
@@ -35,6 +38,7 @@ db.on('error', function() {
 
 db.once('open', function() {
     console.log("Connected");
+
 });
 
 
@@ -138,9 +142,10 @@ io.on('connection', function(socket) {
         for(var room of rooms){
             if(room.id === roomId){
                 room.topic = topic;
-                for(var userInRoom of toom.users){
+                for(var userInRoom of room.users){
                     io.to(userInRoom.socketId).emit('topicChanged', topic);
                 }
+                return;
             }
         }
     })
