@@ -109,7 +109,7 @@ io.on('connection', function(socket) {
         for(var room of rooms){
             if(room.id == roomId) {
                 idea = {
-                    id: getId(5),
+                    id: getId(20),
                     idea,
                     score: 0,
                 }
@@ -124,7 +124,7 @@ io.on('connection', function(socket) {
     });
     socket.on('removeIdea', function({roomId, ideaId}) {
         console.log(`Remove idea in room ${roomId} - ${ideaId}`)
-        for(var room of rooms){
+        for(var room of rooms) {
             if(room.id == roomId) {
                 for(var i = 0;i < room.ideas.length; i++){
                     if(room.ideas[i].id == ideaId){
