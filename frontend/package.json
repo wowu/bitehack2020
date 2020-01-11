@@ -44,5 +44,6 @@
     "hooks": {
       "pre-commit": "pretty-quick --staged"
     }
-  }
+  },
+  "proxy": "localhost:5000"
 }
