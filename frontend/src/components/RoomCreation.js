@@ -25,7 +25,11 @@ const RoomCreation = () => {
       <div className="row my-5">
         <div className="col">
           <div className="d-flex justify-content-center align-items-center">
-            <img style={{ maxWidth: 400 }} src={MasterPlanImage} />
+            <img
+              style={{ maxWidth: 400 }}
+              alt="Master Plan"
+              src={MasterPlanImage}
+            />
           </div>
         </div>
         <div className="col">

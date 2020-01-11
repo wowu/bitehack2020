@@ -5,13 +5,12 @@ export default class Room extends Component {
   constructor(props) {
     super(props);
     this.roomId = props.match.params.id;
-    this.state = { ideas: [], idea: "" };
+    this.state = { ideas: [], idea: "", topic: "" };
 
     this.socket = io("http://localhost:5000");
 
-    this.socket.on("roomInfo", data => {
-      this.setState({ ideas: data.ideas });
-      console.log(data);
+    this.socket.on("roomInfo", ({ ideas, topic }) => {
+      this.setState({ ideas, topic });
     });
 
     this.socket.on("pushNewIdeaToUsers", idea => {
@@ -49,27 +48,34 @@ export default class Room extends Component {
   }
 
   render() {
-    const { ideas, idea } = this.state;
+    const { ideas, idea, topic } = this.state;
+
     return (
       <div>
-        <h3>Brainstorm: {this.roomId}</h3>
+        <div className="container">
+          <div className="row">
+            <div className="col">
+              <h3>Q: {topic}</h3>
 
-        <ul>
-          {ideas.map(idea => (
-            <li key={idea}>{idea}</li>
-          ))}
-        </ul>
+              <ul>
+                {ideas.map(idea => (
+                  <li key={idea}>{idea}</li>
+                ))}
+              </ul>
 
-        <form onSubmit={this.handleFormSubmit.bind(this)}>
-          <input
-            type="text"
-            placeholder="Wpisz pomysł"
-            value={idea}
-            onChange={e => this.setState({ idea: e.target.value })}
-          />
+              <form onSubmit={this.handleFormSubmit.bind(this)}>
+                <input
+                  type="text"
+                  placeholder="Wpisz pomysł"
+                  value={idea}
+                  onChange={e => this.setState({ idea: e.target.value })}
+                />
 
-          <button>Dodaj pomysł</button>
-        </form>
+                <button>Dodaj pomysł</button>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
