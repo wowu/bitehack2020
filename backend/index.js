@@ -76,11 +76,13 @@ io.on('connection', function(socket) {
             if(room.id == roomId){
                 room.users.push(user);
                 for(let userInRoom of room.users){
-                    io.to(userInRoom.socketId).emit('newUserConnected', user)
+                    io.to(userInRoom.socketId).emit('newUserConnected', user);
                 }
-                socket.emit('roomInfo', room)
+                socket.emit('roomInfo', room);
+                return;
             }
         }
+        socket.emit('roomNotFound', {})
     })
     socket.on('newIdea', function({roomId, idea}) {
         console.log(`New idea in room ${roomId} - ${idea}`)
@@ -91,6 +93,7 @@ io.on('connection', function(socket) {
                 for(var userInRoom of room.users){
                     io.to(userInRoom.socketId).emit('pushNewIdeaToUsers', idea)
                 }
+                return;
             }
         }
     })
