@@ -2,36 +2,45 @@ var app = require('express')();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
+var crypto = require('crypto');
+const bodyParser = require("body-parser");
+
+// single room:
+// - id
+// - ideas
+// - topic
+// - users
+var rooms = []
+
 
 // database
 var MongoClient = require('mongodb').MongoClient;
 var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
 
+console.log("Connecting to database...");
+MongoClient.connect(url, function(err, db) {
+    if (err) throw err;
+    console.log("Connected");
 
-var crypto = require('crypto');
-const bodyParser = require("body-parser");
+    // fetching initial data
+    var dbo = db.db("mydb");
+    console.log('Fetching data from database...')
+    dbo.collection("rooms").find({}).toArray(function(err, roomsFromDatabase) {
+        if (err) throw err;
+        console.log('Fetching successful');
+        rooms = roomsFromDatabase
+    });
+    db.close();
+});
 
+
+// POST args config
 app.use(bodyParser.urlencoded({
     extended: true
 }));
 
 app.use(bodyParser.json());
 
-
-
-// room = {'topic': 'Room name', 'id', 'asdfsr4ewfw34dss=='}
-
-// room
-// - id
-// - ideas
-// - topic
-// - users
-
-var rooms = [];
-
-app.get('/', function(req, res){
-    res.sendFile(__dirname + '/index.html');
-});
 
 app.post('/create-room', function(req, res) {
     var roomTopic = req.body.topic
@@ -48,33 +57,33 @@ app.post('/create-room', function(req, res) {
     objectToReturn.ideas = []
 
     rooms.push(objectToReturn)
-    console.log('room created ', objectToReturn)
+    console.log(`Room created ${JSON.stringify(objectToReturn, null, 4)}`)
     res.end(JSON.stringify(objectToReturn));
 })
 
 io.on('connection', function(socket) {
-    console.log('new user connected')
+    console.log(`New user connected (${socket.id})`)
 
     socket.on('connectToRoom', function({ roomId, username }) {
-        console.log(`connect to room ${roomId} as ${username}`)
+        console.log(`User connected to room ${roomId} as ${username}`)
+
         var user = {
             username: username,
             socketId: socket.id
         }
+
         for(let room of rooms){
             if(room.hash == roomId){
                 room.users.push(user);
-                console.log(user)
                 for(let userInRoom of room.users){
-                    console.log(user)
                     io.to(userInRoom.socketId).emit('newUserConnected', user)
                 }
-                
                 socket.emit('roomInfo', room)
             }
         }
     })
     socket.on('newIdea', function({roomId, idea}) {
+        console.log(`New idea in room ${roomId} - ${idea}`)
         for(var room of rooms){
             if(room.id == roomId) {
                 room.ideas.push(idea)
@@ -82,11 +91,10 @@ io.on('connection', function(socket) {
                 for(var userInRoom of room.users){
                     io.to(userInRoom.socketId).emit('pushNewIdeaToUsers', idea)
                 }
-
             }
         }
     })
-    
+
     // socket.on('create', function(room) {
     //     rooms.push(room);
     //     socket.emit('updaterooms', rooms, socket.room);
@@ -108,12 +116,16 @@ io.on('connection', function(socket) {
     //     socket.emit('updaterooms', rooms, newroom);
     // });
 
-    // socket.on('disconnect', function() {
-    //     delete usernames[socket.username];
-    //     io.sockets.emit('updateusers', usernames);
-    //     socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
-    //     socket.leave(socket.room);
-    // });
+    socket.on('disconnect', function() {
+        console.log(`User disconnected (${socket.id})`)
+        for(var i = 0; i < rooms.length;i++){
+            for(var j = 0; j < rooms[i].users.length; j++){
+                if(rooms[i].users[j].socketId == socket.id){
+                    rooms[i].users.pop(j)
+                }
+            }
+        }
+    });
  });
 
  http.listen(5000, function(){
