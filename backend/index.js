@@ -131,6 +131,19 @@ io.on('connection', function(socket) {
         }
         socket.emit('roomNotFound', {})
     })
+
+    socket.on('changeTopic', function({ roomId, topic }) {
+        console.log(`Changing topic of ${roomId} to ${topic}`)
+
+        for(var room of rooms){
+            if(room.id === roomId){
+                room.topic = topic;
+                for(var userInRoom of toom.users){
+                    io.to(userInRoom.socketId).emit('topicChanged', topic);
+                }
+            }
+        }
+    })
     socket.on('newIdea', function({roomId, idea}) {
         console.log(`New idea in room ${roomId} - ${idea}`)
         for(var room of rooms){
