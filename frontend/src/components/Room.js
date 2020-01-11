@@ -1,39 +1,49 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect, Component } from "react";
 import io from "socket.io-client";
 
-const RoomCreation = () => {
-  const { id } = useParams();
-  const [idea, setIdea] = useState("");
+export default class Room extends Component {
+  constructor(props) {
+    super(props);
+    this.roomId = props.match.params.id;
+    this.state = { ideas: [], idea: "" };
 
-  const [ideas, setIdeas] = useState([]);
-  const socket = io("http://localhost:5000");
+    this.socket = io("http://localhost:5000");
+    this.socket.emit("connectToRoom", {
+      roomId: this.roomId,
+      userName: "userName"
+    });
+  }
+  publishIdea() {
+    this.socket.emit("newIdea", {
+      roomId: this.roomId,
+      idea: this.state.idea
+    });
+    this.setState({
+      ideas: [...this.state.ideas, this.state.idea],
+      idea: ""
+    });
+  }
+  render() {
+    const { id, ideas, idea } = this.state;
+    return (
+      <div>
+        <h3>Brainstorm: {id}</h3>
 
-  const publishIdea = () => {
-    setIdeas([idea, ...ideas]);
-    setIdea("");
-  };
+        <ul>
+          {ideas.map(idea => (
+            <li>{idea}</li>
+          ))}
+        </ul>
 
-  return (
-    <div>
-      <h3>Brainstorm: {id}</h3>
+        <input
+          type="text"
+          placeholder="Wpisz pomysł"
+          value={idea}
+          onChange={e => this.setState({ idea: e.target.value })}
+        />
 
-      <ul>
-        {ideas.map(idea => (
-          <li>{idea}</li>
-        ))}
-      </ul>
-
-      <input
-        type="text"
-        placeholder="Wpisz pomysł"
-        value={idea}
-        onChange={e => setIdea(e.target.value)}
-      />
-
-      <button onClick={publishIdea}>Dodaj pomysł</button>
-    </div>
-  );
-};
-
-export default RoomCreation;
+        <button onClick={this.publishIdea.bind(this)}>Dodaj pomysł</button>
+      </div>
+    );
+  }
+}
