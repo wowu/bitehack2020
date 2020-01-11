@@ -73,7 +73,7 @@ io.on('connection', function(socket) {
         }
 
         for(let room of rooms){
-            if(room.hash == roomId){
+            if(room.id == roomId){
                 room.users.push(user);
                 for(let userInRoom of room.users){
                     io.to(userInRoom.socketId).emit('newUserConnected', user)
@@ -122,6 +122,8 @@ io.on('connection', function(socket) {
             for(var j = 0; j < rooms[i].users.length; j++){
                 if(rooms[i].users[j].socketId == socket.id){
                     rooms[i].users.pop(j)
+
+                   
                 }
             }
         }
