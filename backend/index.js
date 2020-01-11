@@ -206,7 +206,7 @@ io.on('connection', function(socket) {
                         idea.score++;
 
                         for(var userInRoom of room.users){
-                            io.to(userInRoom.socketId).emit('ideaUpvoted', ideaId);
+                            io.to(userInRoom.socketId).emit('ideaUpvoted', idea);
                         }
 
                         return;
@@ -224,7 +224,7 @@ io.on('connection', function(socket) {
                         idea.score--;
 
                         for(var userInRoom of room.users){
-                            io.to(userInRoom.socketId).emit('ideaDownvoted', ideaId);
+                            io.to(userInRoom.socketId).emit('ideaDownvoted', idea);
                         }
 
                         return;
