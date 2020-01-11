@@ -121,9 +121,11 @@ io.on('connection', function(socket) {
         for(var i = 0; i < rooms.length;i++){
             for(var j = 0; j < rooms[i].users.length; j++){
                 if(rooms[i].users[j].socketId == socket.id){
-                    rooms[i].users.pop(j)
+                    var deletedUser = rooms[i].users.pop(j)
 
-                   
+                    for(var userInRoom in rooms[i].users){
+                        io.to(userInRoom.socketId).emit('deleteUser', deletedUser)
+                    }
                 }
             }
         }
