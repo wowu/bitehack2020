@@ -21,9 +21,11 @@ var roomSchema = new mongoose.Schema({
   id: String,
   ideas: Array,
   topic: String,
-  users: Array,
-  mode: String
+  users: Array
 });
+roomSchema.methods.changeTopic = function(newTopic) {
+  this.topic = newTopic;
+};
 
 var Room = mongoose.model("Room", roomSchema);
 
@@ -35,15 +37,43 @@ db.on("error", function() {
 
 db.once("open", function() {
   console.log("Connected");
-
-  Room.find(function(err, roomsFromDatabase) {
-    if (err) return console.error(err);
-    if (roomsFromDatabase) {
-      rooms = roomsFromDatabase;
-    }
-    console.log("Rooms fetched from database");
-  });
 });
+
+// database
+// var MongoClient = require('mongodb').MongoClient;
+// var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
+
+// MongoClient.connect(url, function(err, db) {
+//     if (err) throw err;
+//     console.log("Connected");
+
+//     var dataFetched = false;
+//     // fetching data
+//     db.collectionNames(function(err, collections){
+//         for(var collection of collections){
+//             if(collection === 'rooms'){
+//                 console.log('Collection rooms already exists. Fetching data...');
+//                 var dbo = db.db("mydb");
+//                 dbo.collection("rooms").find({}).toArray(function(err, roomsFromDatabase) {
+//                     if (err) throw err;
+//                     console.log('Fetching successful');
+//                     dataFetched = true;
+//                     rooms = roomsFromDatabase
+//                 });
+//             }
+//         }
+//         if(!dataFetched) {
+//             console.log('Collection rooms doesn\'t exist. Creating one...')
+//             dbo.createCollection("rooms", function(err, res) {
+//                 if (err) throw err;
+//                 console.log("Collection created.");
+//                 db.close();
+//             });
+//         }
+//     });
+
+//     db.close();
+// });
 
 // POST args config
 app.use(
@@ -65,18 +95,17 @@ app.post("/create-room", function(req, res) {
 
   res.setHeader("Content-Type", "application/json");
 
-  var newRoom = new Room({
-    id: getId(5),
-    topic: roomTopic,
-    users: [],
-    ideas: [],
-    mode: "insert"
-  });
+  objectToReturn.topic = roomTopic;
 
-  newRoom.save();
-  rooms.push(newRoom);
-  console.log(`Room created ${JSON.stringify(newRoom, null, 4)}`);
-  res.end(JSON.stringify(newRoom));
+  var newRoomId = getId(5);
+  objectToReturn.id = newRoomId;
+  objectToReturn.users = [];
+  objectToReturn.ideas = [];
+  objectToReturn.mode = "insert";
+
+  rooms.push(objectToReturn);
+  console.log(`Room created ${JSON.stringify(objectToReturn, null, 4)}`);
+  res.end(JSON.stringify(objectToReturn));
 });
 
 io.on("connection", function(socket) {
@@ -89,18 +118,18 @@ io.on("connection", function(socket) {
       username: username,
       socketId: socket.id
     };
-    Room.findOne({ id: roomId }, function(err, room) {
-      if (err) {
-        socket.emit("roomNotFound", {});
+
+    for (let room of rooms) {
+      if (room.id == roomId) {
+        room.users.push(user);
+        for (let userInRoom of room.users) {
+          io.to(userInRoom.socketId).emit("newUserConnected", user);
+        }
+        socket.emit("roomInfo", room);
         return;
       }
-      room.users.push(user);
-      for (let userInRoom of room.users) {
-        io.to(userInRoom.socketId).emit("newUserConnected", user);
-      }
-      socket.emit("roomInfo", room);
-      room.save();
-    });
+    }
+    socket.emit("roomNotFound", {});
   });
 
   socket.on("changeTopic", function({ roomId, topic }) {
@@ -173,6 +202,7 @@ io.on("connection", function(socket) {
         for (var idea of room.ideas) {
           if (idea.id == ideaId) {
             idea.score++;
+
             for (var userInRoom of room.users) {
               io.to(userInRoom.socketId).emit("ideaUpvoted", idea);
             }
