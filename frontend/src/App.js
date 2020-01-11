@@ -10,7 +10,7 @@ function App() {
   return (
     <Router>
       <Switch>
-        <Route path="/room/:id" component={props => <Room {...props} />} />
+        <Route path="/room/:id" component={Room} />
         <Route path="/">
           <RoomCreation />
         </Route>
