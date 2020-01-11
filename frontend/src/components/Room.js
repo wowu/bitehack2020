@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import io from "socket.io-client";
 
@@ -7,7 +7,23 @@ const RoomCreation = () => {
   const [idea, setIdea] = useState("");
 
   const [ideas, setIdeas] = useState([]);
-  const socket = io("http://localhost:5000");
+
+  useEffect(() => {
+    const socket = io("http://localhost:5000");
+
+    socket.emit("connectToRoom", {
+      roomId: id,
+      userName: "asd"
+    });
+
+    socket.on("test", data => {
+      console.log("foo");
+    });
+
+    return () => {
+      socket.close();
+    };
+  }, []);
 
   const publishIdea = () => {
     setIdeas([idea, ...ideas]);
