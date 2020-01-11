@@ -18,6 +18,12 @@ def get_similar_verbs(word):
     verbs = similar_words.get_verbs(word)
     return jsonify({'verbs': verbs})
 
+
+@app.route('/synonyms/api/v1.0/proces_sentence/<string:sentence>', methods=['GET'])
+def proces_sentence(sentence):
+    verbs = similar_words.proces_sentence(sentence)
+    return jsonify({'verbs': verbs})
+
 if __name__ == '__main__':
     app.run(debug=True)
 

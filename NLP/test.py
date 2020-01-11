@@ -1,26 +1,26 @@
-# import time
-# from nltk.corpus import wordnet  
+import nltk
+from nltk.corpus import stopwords
 
+# tokens = [t for t in text.split()]
 
-# while True:
-# 	synonyms = []
-# 	antonyms = []
+# sr=stopwords.words('english')
+# clean_tokens = tokens[:]
+# for token in tokens:
+#     if token in stopwords.words('english'):
+#         clean_tokens.remove(token)
+# freq = nltk.FreqDist(clean_tokens)
 
-# 	word = input("Pass the word: ")
+# freq.plot(20, cumulative=False)
 
-# 	for syn in wordnet.synsets(word+'.v'):
-# 		for l in syn.lemmas():
-# 			synonyms.append(l.name())
-# 			if l.antonyms():
-# 				antonyms.append(l.antonyms()[0].name())
+def proces_sentence(sentence):
+    tokens = [t for t in sentence.split()]
+    sr = stopwords.words('english')
+    clean_tokens = tokens[:]
+    for token in tokens:
+        if token in sr:
+            clean_tokens.remove(token)
+    
+    
+    print(clean_tokens)
 
-# 	print(set(synonyms))
-# 	print(set(antonyms))
-import json
-
-tab = [1,2,3,4]
-
-data = {
-	"words":tab
-}
-print(json.dumps(data))
+print(stopwords.words('english'))
