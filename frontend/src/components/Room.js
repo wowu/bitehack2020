@@ -7,7 +7,7 @@ const RoomCreation = () => {
   const [idea, setIdea] = useState("");
 
   const [ideas, setIdeas] = useState([]);
-  const socket = io("http://localhost:3000");
+  const socket = io("http://localhost:5000");
 
   const publishIdea = () => {
     setIdeas([idea, ...ideas]);
