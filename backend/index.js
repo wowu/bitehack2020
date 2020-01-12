@@ -117,8 +117,12 @@ io.on("connection", function(socket) {
     }
   });
   socket.on("clearvotes", ({ roomId }) => {
-    for (let v of findRoom(roomId, { ideas: [] }).ideas) {
+    const room = findRoom(roomId, { ideas: [] });
+    for (let v of room.ideas) {
       v.score = 0;
+    }
+    for (var userInRoom of room.users) {
+      io.to(userInRoom.socketId).emit("votesCleared", room.ideas);
     }
   });
   socket.on("newIdea", function({ roomId, idea }) {
@@ -127,7 +131,7 @@ io.on("connection", function(socket) {
       if (room.id == roomId) {
         idea = {
           id: getId(20),
-          idea,
+          idea: idea.trim().toLocaleLowerCase(),
           score: 0
         };
 
