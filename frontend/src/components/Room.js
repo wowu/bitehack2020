@@ -3,6 +3,7 @@ import io from "socket.io-client";
 import { withRouter } from "react-router-dom";
 import { RIEInput } from "riek";
 import createWhiteboard from "./Whiteboard";
+import Autosuggest from "react-autosuggest";
 
 import Card from "./Card";
 import KanbanImg from "../assets/kanban.png";
@@ -34,7 +35,9 @@ class Room extends Component {
       topic: "",
       mode: "insert",
       loading: true,
-      userIdeaCount: 0
+      userIdeaCount: 0,
+      votesRemaining: 0,
+      suggestions: []
     };
 
     this.socket = io("/");
@@ -53,10 +56,13 @@ class Room extends Component {
       console.log(idea);
     });
 
-    this.socket.on("roomModeChanged", mode => {
-      console.log(mode);
-      this.setState({ mode });
-    });
+    this.socket.on(
+      "roomModeChanged",
+      ({ mode, votesRemaining = this.state.votesRemaining }) => {
+        console.log(mode, votesRemaining);
+        this.setState({ mode, votesRemaining });
+      }
+    );
 
     this.socket.on("pushDeletedIdeaToUsers", idea => {
       this.setState({
@@ -88,6 +94,10 @@ class Room extends Component {
           idea.id === newIdea.id ? newIdea : idea
         )
       });
+    });
+
+    this.socket.on("suggestions", suggestions => {
+      this.setState({ suggestions });
     });
 
     this.socket.emit("connectToRoom", {
@@ -134,11 +144,15 @@ class Room extends Component {
   }
 
   upvote(idea) {
-    this.socket.emit("upvoteIdea", { roomId: this.roomId, ideaId: idea.id });
+    if (this.state.votesRemaining > 0) {
+      this.socket.emit("upvoteIdea", { roomId: this.roomId, ideaId: idea.id });
+      this.setState({ votesRemaining: this.state.votesRemaining - 1 });
+    }
   }
 
   downvote(idea) {
     this.socket.emit("downvoteIdea", { roomId: this.roomId, ideaId: idea.id });
+    this.setState({ votesRemaining: this.state.votesRemaining + 1 });
   }
 
   render() {
@@ -219,20 +233,26 @@ class Room extends Component {
                     <div>
                       {mode === "voting" && (
                         <h5 className="text-center">
-                          Now vote for 3 best ideas
+                          {this.state.votesRemaining > 0
+                            ? `You have ${this.state.votesRemaining} votes remaining`
+                            : `You don't have any votes remaining`}
                         </h5>
                       )}
-                      {ideas.map(idea => (
-                        <Card
-                          key={idea.id}
-                          idea={idea}
-                          onRemove={() => this.removeIdea(idea)}
-                          onUpvote={() => this.upvote(idea)}
-                          onDownvote={() => this.downvote(idea)}
-                          mode={mode}
-                          master={master}
-                        />
-                      ))}
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        {ideas.map(idea => (
+                          <Card
+                            key={idea.id}
+                            idea={idea}
+                            onRemove={() => this.removeIdea(idea)}
+                            onUpvote={() => this.upvote(idea)}
+                            onDownvote={() => this.downvote(idea)}
+                            getState={() => this.state}
+                            style={master ? { order: -(idea.score || 0) } : {}}
+                            mode={mode}
+                            master={master}
+                          />
+                        ))}
+                      </div>
                     </div>
                   )}
 
@@ -248,9 +268,13 @@ class Room extends Component {
                           maxLength={80}
                           placeholder="Your idea..."
                           value={ideaText}
-                          onChange={e =>
-                            this.setState({ ideaText: e.target.value })
-                          }
+                          onChange={e => {
+                            this.setState({ ideaText: e.target.value });
+                            this.socket.emit("suggest", {
+                              roomId: this.roomId,
+                              input: e.target.value
+                            });
+                          }}
                           style={{
                             borderTopLeftRadius: "1.078em",
                             borderBottomLeftRadius: "1.078em"
@@ -269,6 +293,42 @@ class Room extends Component {
                           </>
                         )}
                       </div>
+                      {/* todo UI */}
+                      <Autosuggest
+                        suggestions={this.state.suggestions}
+                        onSuggestionsFetchRequested={console.log}
+                        onSuggestionsClearRequested={console.log}
+                        getSuggestionValue={suggestion => suggestion}
+                        renderSuggestion={s => <div>test</div>}
+                        inputProps={{
+                          value: this.state.ideaText,
+                          onChange: e => {
+                            this.setState({ ideaText: e.target.value });
+                          }
+                        }}
+                      />
+                      {this.state.ideaText
+                        ? this.state.suggestions.map((suggestion, i) => (
+                            <div key={i}>
+                              <h2>{suggestion}</h2>
+                              <button
+                                onClick={e => {
+                                  this.socket.emit("newIdea", {
+                                    roomId: this.roomId,
+                                    idea: suggestion
+                                  });
+                                  this.state.suggestions.splice(i, 1);
+                                  this.setState({
+                                    suggestions: this.state.suggestions
+                                  });
+                                  e.preventDefault();
+                                }}
+                              >
+                                +
+                              </button>
+                            </div>
+                          ))
+                        : null}
                     </form>
                   )}
 
