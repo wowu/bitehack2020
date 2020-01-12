@@ -5,6 +5,8 @@ var io = require("socket.io")(http);
 
 var crypto = require("crypto");
 const bodyParser = require("body-parser");
+const vote2ideaRatio = 0.3;
+const { ceil, min } = Math;
 
 var rooms = [];
 
@@ -88,7 +90,19 @@ io.on("connection", function(socket) {
         room.mode = newMode;
 
         for (var userInRoom of room.users) {
-          io.to(userInRoom.socketId).emit("roomModeChanged", newMode);
+          if (newMode === "voting") {
+            const { ideas } = room;
+            io.to(userInRoom.socketId).emit("roomModeChanged", {
+              mode: newMode,
+              votesRemaining: min(
+                ceil(ideas.length * vote2ideaRatio),
+                ideas.length
+              )
+            });
+          } else
+            io.to(userInRoom.socketId).emit("roomModeChanged", {
+              mode: newMode
+            });
         }
         return;
       }
@@ -131,15 +145,16 @@ io.on("connection", function(socket) {
       }
     }
   });
-  socket.on("upvoteIdea", function({ roomId, ideaId }) {
+
+  function scoreIdea(roomId, ideaId, delta, event) {
     for (var room of rooms) {
       if (room.id == roomId) {
         for (var idea of room.ideas) {
           if (idea.id == ideaId) {
-            idea.score++;
+            idea.score += delta;
 
             for (var userInRoom of room.users) {
-              io.to(userInRoom.socketId).emit("ideaUpvoted", idea);
+              io.to(userInRoom.socketId).emit(event, idea);
             }
 
             return;
@@ -147,24 +162,33 @@ io.on("connection", function(socket) {
         }
       }
     }
+  }
+  socket.on("upvoteIdea", function({ roomId, ideaId }) {
+    scoreIdea(roomId, ideaId, 1, "ideaUpvoted");
+    socket.votes += 1;
   });
 
   socket.on("downvoteIdea", function({ roomId, ideaId }) {
-    for (var room of rooms) {
-      if (room.id == roomId) {
-        for (var idea of room.ideas) {
-          if (idea.id == ideaId) {
-            idea.score--;
+    scoreIdea(roomId, ideaId, -1, "ideaDownvoted");
+    socket.votes -= 1;
+  });
 
-            for (var userInRoom of room.users) {
-              io.to(userInRoom.socketId).emit("ideaDownvoted", idea);
-            }
+  const findRoom = (roomId, def = null) =>
+    rooms.find(room => room.id === roomId) || def;
 
-            return;
-          }
-        }
-      }
-    }
+  const filterSuggestions = (ideas, suggestions) =>
+    suggestions.filter(
+      suggestion => !ideas.find(idea => idea.idea == suggestion)
+    );
+
+  socket.on("suggest", async ({ roomId, input }) => {
+    const ideas = findRoom(roomId, { ideas: [] }).ideas;
+    // todo: request do serwera andrzeja
+    const suggestions = [
+      ...Array.from({ length: (Math.random() * 8) | 0 }, (_, i) => `${i}`)
+    ];
+    const filtered = filterSuggestions(ideas, suggestions);
+    socket.emit("suggestions", filtered);
   });
 
   socket.on("disconnect", function() {
