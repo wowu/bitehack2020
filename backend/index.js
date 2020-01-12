@@ -183,6 +183,10 @@ io.on("connection", function(socket) {
   });
 });
 
+app.get("*", function(req, res) {
+  res.sendFile(__dirname + "/public/index.html");
+});
+
 http.listen(5000, function() {
   console.log("Listening on *:5000");
 });
