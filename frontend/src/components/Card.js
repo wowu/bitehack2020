@@ -26,7 +26,7 @@ export default class Card extends Component {
             <div className="col-4 col-md-2">
               <div className="row justify-content-end">
                 <div className="col text-right">
-                  {mode === "voting" && (
+                  {mode === "voting" && !master && (
                     <IconToggle
                       iconOn="fa fa-heart"
                       iconOff="far fa-heart"

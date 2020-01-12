@@ -98,9 +98,11 @@ class Room extends Component {
       });
     });
 
-    // this.socket.on("suggestions", suggestions => {
-    //   this.setState({ suggestions });
-    // });
+    this.socket.on("votesCleared", ideas => {
+      this.setState({
+        ideas
+      });
+    });
 
     this.socket.emit("connectToRoom", {
       roomId: this.roomId,
@@ -159,6 +161,10 @@ class Room extends Component {
 
   isSentence(string) {
     return string.trim().split(" ").length > 1;
+  }
+
+  clearVotes() {
+    this.socket.emit("clearvotes", { roomId: this.roomId });
   }
 
   debouncedSuggestions = debounce(text => {
@@ -250,12 +256,25 @@ class Room extends Component {
                   {(mode === "voting" || (master && mode === "block")) && (
                     <div>
                       {mode === "voting" && (
-                        <h5 className="text-center">
-                          {this.state.votesRemaining > 0
-                            ? `You have ${this.state.votesRemaining} votes remaining`
-                            : `You don't have any votes remaining`}
-                        </h5>
+                        <div className="text-center">
+                          {!master && (
+                            <h5 className="text-center">
+                              {this.state.votesRemaining > 0
+                                ? `You have ${this.state.votesRemaining} votes remaining`
+                                : `You don't have any votes remaining`}
+                            </h5>
+                          )}
+                          {master && (
+                            <button
+                              className="my-2 btn btn-info"
+                              onClick={this.clearVotes.bind(this)}
+                            >
+                              Clear votes
+                            </button>
+                          )}
+                        </div>
                       )}
+
                       <div style={{ display: "flex", flexDirection: "column" }}>
                         {ideas.map(idea => (
                           <Card
