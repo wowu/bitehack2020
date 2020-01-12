@@ -21,3 +21,13 @@ rect {
 #ruler {
   visibility: hidden;
 }
+
+.toggle-icon {
+  cursor: pointer;
+  font-size: 1.5em;
+  transition-duration: 0.1s;
+}
+
+.toggle-icon.prev {
+  transform: scale(1.1);
+}

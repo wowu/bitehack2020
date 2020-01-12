@@ -12,7 +12,6 @@ function App() {
     <Router>
       <Switch>
         <Route path="/room/:id" component={Room} />
-        <Route path="/whiteboard" component={Whiteboard} />
         <Route path="/">
           <RoomCreation />
         </Route>

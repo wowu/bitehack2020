@@ -86,6 +86,14 @@ class Room extends Component {
       });
     });
 
+    this.socket.on("ideaDownvoted", newIdea => {
+      this.setState({
+        ideas: this.state.ideas.map(idea =>
+          idea.id === newIdea.id ? newIdea : idea
+        )
+      });
+    });
+
     this.socket.emit("connectToRoom", {
       roomId: this.roomId,
       userName: "userName"
@@ -131,6 +139,10 @@ class Room extends Component {
 
   upvote(idea) {
     this.socket.emit("upvoteIdea", { roomId: this.roomId, ideaId: idea.id });
+  }
+
+  downvote(idea) {
+    this.socket.emit("downvoteIdea", { roomId: this.roomId, ideaId: idea.id });
   }
 
   render() {
@@ -220,6 +232,7 @@ class Room extends Component {
                           idea={idea}
                           onRemove={() => this.removeIdea(idea)}
                           onUpvote={() => this.upvote(idea)}
+                          onDownvote={() => this.downvote(idea)}
                           mode={mode}
                           master={master}
                         />
