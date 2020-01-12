@@ -62,7 +62,13 @@ io.on("connection", function(socket) {
         for (let userInRoom of room.users) {
           io.to(userInRoom.socketId).emit("newUserConnected", user);
         }
-        socket.emit("roomInfo", room);
+        socket.emit("roomInfo", {
+          ...room,
+          votesRemaining: min(
+            room.ideas.length,
+            ceil(room.ideas.length * vote2ideaRatio)
+          )
+        });
         return;
       }
     }

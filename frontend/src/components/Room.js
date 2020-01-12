@@ -42,8 +42,8 @@ class Room extends Component {
 
     this.socket = io("/");
 
-    this.socket.on("roomInfo", ({ ideas, topic, mode }) => {
-      this.setState({ ideas, topic, mode, loading: false });
+    this.socket.on("roomInfo", ({ ideas, topic, mode, votesRemaining }) => {
+      this.setState({ ideas, topic, mode, loading: false, votesRemaining });
 
       ideas.forEach(this.addToWhiteboard);
     });
