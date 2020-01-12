@@ -157,7 +157,7 @@ class Room extends Component {
   }
 
   isSentence(string) {
-    return string.trim().split(" ").length >= 1;
+    return string.trim().split(" ").length > 1;
   }
 
   render() {
