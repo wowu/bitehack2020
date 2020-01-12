@@ -2,6 +2,8 @@ var app = require("express")();
 var http = require("http").createServer(app);
 var io = require("socket.io")(http);
 
+var cors = require("cors");
+
 var mongoose = require("mongoose");
 var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
 mongoose.connect(url, { useNewUrlParser: true });
@@ -39,42 +41,6 @@ db.once("open", function() {
   console.log("Connected");
 });
 
-// database
-// var MongoClient = require('mongodb').MongoClient;
-// var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
-
-// MongoClient.connect(url, function(err, db) {
-//     if (err) throw err;
-//     console.log("Connected");
-
-//     var dataFetched = false;
-//     // fetching data
-//     db.collectionNames(function(err, collections){
-//         for(var collection of collections){
-//             if(collection === 'rooms'){
-//                 console.log('Collection rooms already exists. Fetching data...');
-//                 var dbo = db.db("mydb");
-//                 dbo.collection("rooms").find({}).toArray(function(err, roomsFromDatabase) {
-//                     if (err) throw err;
-//                     console.log('Fetching successful');
-//                     dataFetched = true;
-//                     rooms = roomsFromDatabase
-//                 });
-//             }
-//         }
-//         if(!dataFetched) {
-//             console.log('Collection rooms doesn\'t exist. Creating one...')
-//             dbo.createCollection("rooms", function(err, res) {
-//                 if (err) throw err;
-//                 console.log("Collection created.");
-//                 db.close();
-//             });
-//         }
-//     });
-
-//     db.close();
-// });
-
 // POST args config
 app.use(
   bodyParser.urlencoded({
@@ -83,6 +49,8 @@ app.use(
 );
 
 app.use(bodyParser.json());
+
+app.use(cors());
 
 function getId(length) {
   return crypto.randomBytes(length).toString("hex");
