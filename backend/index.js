@@ -1,45 +1,12 @@
+var express = require("express");
 var app = require("express")();
 var http = require("http").createServer(app);
 var io = require("socket.io")(http);
 
-var cors = require("cors");
-
-var mongoose = require("mongoose");
-var url = "mongodb://mongo.grzegorzpach.pl/bitehack";
-mongoose.connect(url, { useNewUrlParser: true });
-var db = mongoose.connection;
-
 var crypto = require("crypto");
 const bodyParser = require("body-parser");
 
-// single room:
-// - id
-// - ideas
-// - topic
-// - users
 var rooms = [];
-
-var roomSchema = new mongoose.Schema({
-  id: String,
-  ideas: Array,
-  topic: String,
-  users: Array
-});
-roomSchema.methods.changeTopic = function(newTopic) {
-  this.topic = newTopic;
-};
-
-var Room = mongoose.model("Room", roomSchema);
-
-// database
-console.log("Connecting to database...");
-db.on("error", function() {
-  console.error("Server unreachable!");
-});
-
-db.once("open", function() {
-  console.log("Connected");
-});
 
 // POST args config
 app.use(
@@ -50,7 +17,7 @@ app.use(
 
 app.use(bodyParser.json());
 
-app.use(cors());
+app.use(express.static("public"));
 
 function getId(length) {
   return crypto.randomBytes(length).toString("hex");
