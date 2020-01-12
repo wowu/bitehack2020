@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import io from "socket.io-client";
 import { withRouter } from "react-router-dom";
 import { RIEInput } from "riek";
+import createWhiteboard from "./Whiteboard";
 
 import Card from "./Card";
 import KanbanImg from "../assets/kanban.png";
@@ -16,6 +17,13 @@ class Room extends Component {
 
     this.master = this.masterOf && this.masterOf.indexOf(this.roomId) !== -1;
 
+    const { component, add, remove } = createWhiteboard(
+      window.innerWidth,
+      window.innerHeight
+    );
+    this.removeFromWhiteboard = remove;
+    this.addToWhiteboard = add;
+    this.whiteboard = component;
     this.state = {
       ideas: [],
       ideaText: "",
@@ -39,6 +47,7 @@ class Room extends Component {
       this.setState({
         ideas: [...this.state.ideas, idea]
       });
+      this.addToWhiteboard(idea);
     });
 
     this.socket.on("roomModeChanged", mode => {
@@ -50,6 +59,7 @@ class Room extends Component {
       this.setState({
         ideas: this.state.ideas.filter(({ id }) => id !== idea.id)
       });
+      this.removeFromWhiteboard(idea);
     });
 
     this.socket.on("topicChanged", topic => {
@@ -209,6 +219,23 @@ class Room extends Component {
                       ))}
                     </div>
                   )}
+
+                  {this.whiteboard}
+                  <ul>
+                    {ideas.map(idea => (
+                      <li key={idea.id}>
+                        {idea.idea} Votez: {idea.score}
+                        {master && (
+                          <button onClick={() => this.removeIdea(idea)}>
+                            X
+                          </button>
+                        )}
+                        {mode === "voting" && (
+                          <button onClick={() => this.upvote(idea)}>/\</button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
 
                   {mode === "insert" && (
                     <form
