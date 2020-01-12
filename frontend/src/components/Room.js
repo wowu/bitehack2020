@@ -4,6 +4,7 @@ import { withRouter } from "react-router-dom";
 import { RIEInput } from "riek";
 import createWhiteboard from "./Whiteboard";
 import Autosuggest from "react-autosuggest";
+import axios from "axios";
 
 import Card from "./Card";
 import KanbanImg from "../assets/kanban.png";
@@ -96,9 +97,9 @@ class Room extends Component {
       });
     });
 
-    this.socket.on("suggestions", suggestions => {
-      this.setState({ suggestions });
-    });
+    // this.socket.on("suggestions", suggestions => {
+    //   this.setState({ suggestions });
+    // });
 
     this.socket.emit("connectToRoom", {
       roomId: this.roomId,
@@ -153,6 +154,10 @@ class Room extends Component {
   downvote(idea) {
     this.socket.emit("downvoteIdea", { roomId: this.roomId, ideaId: idea.id });
     this.setState({ votesRemaining: this.state.votesRemaining + 1 });
+  }
+
+  isSentence(string) {
+    return string.trim().split(" ").length >= 1;
   }
 
   render() {
@@ -270,10 +275,19 @@ class Room extends Component {
                           value={ideaText}
                           onChange={e => {
                             this.setState({ ideaText: e.target.value });
-                            this.socket.emit("suggest", {
-                              roomId: this.roomId,
-                              input: e.target.value
-                            });
+                            const text = e.target.value;
+
+                            const endpointName = this.isSentence(text)
+                              ? "proces_sentence"
+                              : "similar_nouns";
+
+                            axios
+                              .get(`/api/v1.0/${endpointName}/${text}`)
+                              .then(({ data }) => {
+                                this.setState({
+                                  suggestions: data.suggestions
+                                });
+                              });
                           }}
                           style={{
                             borderTopLeftRadius: "1.078em",
@@ -294,13 +308,14 @@ class Room extends Component {
                         )}
                       </div>
                       {/* todo UI */}
-                      <Autosuggest
+                      {/* <Autosuggest
                         suggestions={this.state.suggestions}
                         onSuggestionsFetchRequested={({ value }) => {
-                          this.socket.emit("suggest", {
-                            roomId: this.roomId,
-                            value
-                          });
+                          axios
+                            .get(`/api/v1.0/similar_nouns/${value}`)
+                            .then(({ data }) => {
+                              this.setState({ suggestions: data.nouns });
+                            });
                         }}
                         onSuggestionsClearRequested={() => {
                           this.setState({
@@ -323,7 +338,7 @@ class Room extends Component {
                             this.setState({ ideaText: e.target.value });
                           }
                         }}
-                      />
+                      /> */}
                       {this.state.ideaText
                         ? this.state.suggestions.map((suggestion, i) => (
                             <div key={i}>

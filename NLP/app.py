@@ -11,18 +11,18 @@ def index():
 @app.route('/v1.0/similar_nouns/<string:word>', methods=['GET'])
 def get_similar_nouns(word):
     nouns = similar_words.get_nouns(word)
-    return jsonify({'nouns': nouns})
+    return jsonify({'suggestions': nouns})
 
 @app.route('/v1.0/similar_verbs/<string:word>', methods=['GET'])
 def get_similar_verbs(word):
     verbs = similar_words.get_verbs(word)
-    return jsonify({'verbs': verbs})
+    return jsonify({'suggestions': verbs})
 
 
 @app.route('/v1.0/proces_sentence/<string:sentence>', methods=['GET'])
 def proces_sentence(sentence):
     words = similar_words.proces_sentence(sentence)
-    return jsonify({'words': words})
+    return jsonify({'suggestions': words})
 
 if __name__ == '__main__':
     app.run(port=6000, host='0.0.0.0')
