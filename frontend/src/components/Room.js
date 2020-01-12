@@ -21,6 +21,7 @@ class Room extends Component {
       window.innerWidth,
       window.innerHeight
     );
+
     this.removeFromWhiteboard = remove;
     this.addToWhiteboard = add;
     this.whiteboard = component;
@@ -41,6 +42,8 @@ class Room extends Component {
 
     this.socket.on("roomInfo", ({ ideas, topic, mode }) => {
       this.setState({ ideas, topic, mode, loading: false });
+
+      ideas.forEach(this.addToWhiteboard);
     });
 
     this.socket.on("pushNewIdeaToUsers", idea => {
@@ -200,7 +203,7 @@ class Room extends Component {
                     </div>
                   )}
 
-                  {(master || mode === "voting") && (
+                  {(mode === "voting" || (master && mode === "block")) && (
                     <div>
                       {mode === "voting" && (
                         <h5 className="text-center">
@@ -220,23 +223,6 @@ class Room extends Component {
                     </div>
                   )}
 
-                  {this.whiteboard}
-                  <ul>
-                    {ideas.map(idea => (
-                      <li key={idea.id}>
-                        {idea.idea} Votez: {idea.score}
-                        {master && (
-                          <button onClick={() => this.removeIdea(idea)}>
-                            X
-                          </button>
-                        )}
-                        {mode === "voting" && (
-                          <button onClick={() => this.upvote(idea)}>/\</button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-
                   {mode === "insert" && (
                     <form
                       className="mt-4"
@@ -246,6 +232,7 @@ class Room extends Component {
                         <input
                           className="form-control"
                           type="text"
+                          maxLength={80}
                           placeholder="Your idea..."
                           value={ideaText}
                           onChange={e =>
@@ -286,6 +273,7 @@ class Room extends Component {
             </div>
           </div>
         )}
+        {master && mode === "insert" && this.whiteboard}
       </>
     );
   }

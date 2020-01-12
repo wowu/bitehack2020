@@ -28,6 +28,7 @@ function createNewWhiteBoard(width, height) {
   }
 
   const svg = d3.create("svg");
+  svg.node().classList.add("whiteboard");
   svg.attr("width", width);
   svg.attr("height", height);
   svg.attr("viewBox", [0, 0, width, height]);
@@ -136,7 +137,7 @@ function createNewWhiteBoard(width, height) {
         restart();
       }
     },
-    component: <div ref={div => div.append(svg.node())}> </div>
+    component: <div ref={div => div && div.append(svg.node())}> </div>
   };
 }
 
