@@ -296,10 +296,27 @@ class Room extends Component {
                       {/* todo UI */}
                       <Autosuggest
                         suggestions={this.state.suggestions}
-                        onSuggestionsFetchRequested={console.log}
-                        onSuggestionsClearRequested={console.log}
-                        getSuggestionValue={suggestion => suggestion}
-                        renderSuggestion={s => <div>test</div>}
+                        onSuggestionsFetchRequested={({ value }) => {
+                          this.socket.emit("suggest", {
+                            roomId: this.roomId,
+                            value
+                          });
+                        }}
+                        onSuggestionsClearRequested={() => {
+                          this.setState({
+                            suggestions: []
+                          });
+                        }}
+                        getSuggestionValue={suggestion => {
+                          console.log("suggested", suggestion);
+                          return suggestion;
+                        }}
+                        renderSuggestion={s => (
+                          <div>
+                            {s}
+                            <button>+</button>
+                          </div>
+                        )}
                         inputProps={{
                           value: this.state.ideaText,
                           onChange: e => {
