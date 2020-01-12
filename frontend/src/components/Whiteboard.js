@@ -1,6 +1,18 @@
 import * as d3 from "d3";
 import React from "react";
 
+const svgElement = type =>
+  document.createElementNS("http://www.w3.org/2000/svg", type);
+const measureString = (window.ms = (() => {
+  const ruler = document.createElement("span");
+  ruler.id = "ruler";
+  document.body.append(ruler);
+  return string => {
+    ruler.innerText = string;
+    return ruler.getBoundingClientRect().width;
+  };
+})());
+
 function createNewWhiteBoard(width, height) {
   function drag() {
     function dragstarted(d) {
@@ -26,17 +38,28 @@ function createNewWhiteBoard(width, height) {
       .on("drag", dragged)
       .on("end", dragended);
   }
+  let offsetX = 0;
+  let offsetY = 0;
+  let scale = 1;
 
   const svg = d3.create("svg");
   svg.node().classList.add("whiteboard");
   svg.attr("width", width);
   svg.attr("height", height);
   svg.attr("viewBox", [0, 0, width, height]);
-
-  const color = d3.scaleOrdinal(d3.schemeCategory10);
+  window.addEventListener("resize", () => {
+    width = window.innerWidth;
+    svg.attr("width", width);
+    svg.attr("viewBox", [0, 0, width, height]);
+    g.attr(
+      "transform",
+      `translate(${width / 2 + offsetX}, ${height / 2 + offsetY})`
+    );
+  });
 
   let nodes = [];
   let links = [];
+  let onNodeRemoved = () => {};
 
   const simulation = d3
     .forceSimulation(nodes)
@@ -63,32 +86,37 @@ function createNewWhiteBoard(width, height) {
 
   restart();
 
-  let i = 100;
-  svg.on("dblclick", () => {
-    nodes.push({ id: i++, idea: "foo bar idea!" });
-    restart();
-  });
+  function updateTransforms() {
+    g.attr(
+      "transform",
+      `translate(${width / 2 + offsetX}, ${height / 2 +
+        offsetY}), scale(${scale})`
+    );
+  }
 
   function restart() {
     // Apply the general update pattern to the nodes.
-    node = node.data(nodes, function(d) {
-      return d;
-    });
+    node = node.data(nodes, d => d.id);
     node.exit().remove();
 
     node = node
       .enter()
-      .append("g")
-      .append("text")
-      .text(d => d.idea)
-      // .append("rect")
-      .attr("stroke", function(d) {
-        return "black";
+      .append(d => {
+        const g = svgElement("g");
+        const text = svgElement("text");
+        text.innerHTML = d.idea;
+        const rect = svgElement("rect");
+        rect.setAttribute("width", measureString(d.idea) + 12);
+        g.append(rect);
+        g.append(text);
+        // remove nodes
+        g.addEventListener("contextmenu", e => {
+          e.preventDefault();
+          exports.remove(d);
+          onNodeRemoved({ id: d.id, idea: d.idea });
+        });
+        return g;
       })
-      // .attr("width", 150)
-      // .attr("height", 50)
-      // // .attr('text')
-      // // .text('test')
       .merge(node);
 
     // Apply the general update pattern to the links.
@@ -106,12 +134,27 @@ function createNewWhiteBoard(width, height) {
     simulation.force("link").links(links);
     simulation.alpha(1).restart();
   }
+  let mousedown = false;
+  svg.node().addEventListener("mousedown", e => {
+    mousedown = true;
+  });
+  window.addEventListener("mouseup", e => {
+    mousedown = false;
+  });
+  window.addEventListener("mousemove", e => {
+    if (mousedown) {
+      offsetX += e.movementX;
+      offsetY += e.movementY;
+      updateTransforms();
+    }
+  });
+  svg.node().addEventListener("mousewheel", e => {
+    scale -= e.deltaY / 500;
+    updateTransforms();
+  });
 
   function ticked() {
-    node
-      .attr("x", d => d.x)
-      .attr("y", d => d.y)
-      .call(drag());
+    node.attr("transform", d => `translate(${d.x}, ${d.y})`).call(drag());
 
     link
       .attr("x1", d => d.source.x)
@@ -120,25 +163,28 @@ function createNewWhiteBoard(width, height) {
       .attr("y2", d => d.target.y);
   }
 
-  svg.on("contextmenu", () => {
-    nodes.pop();
-    restart();
-  });
-
-  return {
+  const exports = {
     add(node) {
       nodes.push(node);
       restart();
     },
     remove(node) {
       const index = nodes.findIndex(x => x.id === node.id);
-      if (index != -1) {
+      if (index !== -1) {
         nodes.splice(index, 1);
         restart();
       }
     },
+    onNodeRemoved(callback) {
+      onNodeRemoved = callback;
+    },
+    connect(source, target) {
+      links.push({ source, target });
+      restart();
+    },
     component: <div ref={div => div && div.append(svg.node())}> </div>
   };
+  return exports;
 }
 
 export default createNewWhiteBoard;

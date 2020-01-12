@@ -17,10 +17,13 @@ class Room extends Component {
 
     this.master = this.masterOf && this.masterOf.indexOf(this.roomId) !== -1;
 
-    const { component, add, remove } = createWhiteboard(
+    const { component, add, remove, onNodeRemoved } = createWhiteboard(
       window.innerWidth,
-      window.innerHeight
+      window.innerHeight - 200
     );
+    onNodeRemoved(node => {
+      this.removeIdea(node);
+    });
 
     this.removeFromWhiteboard = remove;
     this.addToWhiteboard = add;
@@ -51,6 +54,7 @@ class Room extends Component {
         ideas: [...this.state.ideas, idea]
       });
       this.addToWhiteboard(idea);
+      console.log(idea);
     });
 
     this.socket.on("roomModeChanged", mode => {
@@ -175,7 +179,7 @@ class Room extends Component {
                         </label>
                       </div>
                       <div className="form-check form-check-inline">
-                        <label class="form-check-inline">
+                        <label className="form-check-inline">
                           <input
                             type="radio"
                             className="mr-1"
@@ -188,7 +192,7 @@ class Room extends Component {
                         </label>
                       </div>
                       <div className="form-check form-check-inline">
-                        <label class="form-check-inline">
+                        <label className="form-check-inline">
                           <input
                             type="radio"
                             className="mr-1"

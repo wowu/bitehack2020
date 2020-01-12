@@ -1,2 +1,23 @@
 svg.whiteboard {
+  position: fixed;
+  top: 200px;
+  left: 0;
+}
+
+text {
+  stroke: none;
+  font-family: sans-serif;
+  user-select: none;
+}
+
+rect {
+  stroke: #5089ed;
+  transform: translate(-6px, -26px);
+  rx: 12;
+  height: 40px;
+  fill: #f1f1f1;
+}
+
+#ruler {
+  visibility: hidden;
 }
