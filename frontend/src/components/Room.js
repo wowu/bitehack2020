@@ -274,12 +274,50 @@ class Room extends Component {
                     </div>
                   )}
 
-                  {mode === "insert" && (
+                  {mode === "insert" && !master && (
                     <form
                       className="mt-4"
                       onSubmit={this.handleFormSubmit.bind(this)}
                     >
-                      <div className="input-group">
+                      {this.state.suggestions.length > 0 &&
+                        this.state.ideaText && (
+                          <div>
+                            Here are some suggestions based on what you type.
+                            Tap + to add some to the board.
+                          </div>
+                        )}
+
+                      {this.state.ideaText
+                        ? this.state.suggestions.map((suggestion, i) => (
+                            <div
+                              key={i}
+                              className="d-flex justify-content-between"
+                            >
+                              <h5>{suggestion}</h5>
+                              <div
+                                className="btn btn-sm btn-secondary mb-1"
+                                onClick={e => {
+                                  this.socket.emit("newIdea", {
+                                    roomId: this.roomId,
+                                    idea: suggestion
+                                  });
+                                  this.state.suggestions.splice(i, 1);
+                                  this.setState({
+                                    suggestions: this.state.suggestions,
+                                    userIdeaCount: this.state.userIdeaCount + 1
+                                  });
+                                  e.preventDefault();
+                                }}
+                                style={{ cursor: "pointer" }}
+                              >
+                                <i class="fa fa-plus" aria-hidden="true"></i>{" "}
+                                Send
+                              </div>
+                            </div>
+                          ))
+                        : null}
+
+                      <div className="input-group mt-2">
                         <input
                           className="form-control"
                           type="text"
@@ -291,18 +329,6 @@ class Room extends Component {
 
                             const text = e.target.value;
                             this.debouncedSuggestions(text);
-
-                            // const endpointName = this.isSentence(text)
-                            //   ? "proces_sentence"
-                            //   : "similar_nouns";
-
-                            // axios
-                            //   .get(`/api/v1.0/${endpointName}/${text}`)
-                            //   .then(({ data }) => {
-                            //     this.setState({
-                            //       suggestions: data.suggestions
-                            //     });
-                            //   });
                           }}
                           style={{
                             borderTopLeftRadius: "1.078em",
@@ -322,60 +348,6 @@ class Room extends Component {
                           </>
                         )}
                       </div>
-                      {/* todo UI */}
-                      {/* <Autosuggest
-                        suggestions={this.state.suggestions}
-                        onSuggestionsFetchRequested={({ value }) => {
-                          axios
-                            .get(`/api/v1.0/similar_nouns/${value}`)
-                            .then(({ data }) => {
-                              this.setState({ suggestions: data.nouns });
-                            });
-                        }}
-                        onSuggestionsClearRequested={() => {
-                          this.setState({
-                            suggestions: []
-                          });
-                        }}
-                        getSuggestionValue={suggestion => {
-                          console.log("suggested", suggestion);
-                          return suggestion;
-                        }}
-                        renderSuggestion={s => (
-                          <div>
-                            {s}
-                            <button>+</button>
-                          </div>
-                        )}
-                        inputProps={{
-                          value: this.state.ideaText,
-                          onChange: e => {
-                            this.setState({ ideaText: e.target.value });
-                          }
-                        }}
-                      /> */}
-                      {this.state.ideaText
-                        ? this.state.suggestions.map((suggestion, i) => (
-                            <div key={i}>
-                              <h2>{suggestion}</h2>
-                              <button
-                                onClick={e => {
-                                  this.socket.emit("newIdea", {
-                                    roomId: this.roomId,
-                                    idea: suggestion
-                                  });
-                                  this.state.suggestions.splice(i, 1);
-                                  this.setState({
-                                    suggestions: this.state.suggestions
-                                  });
-                                  e.preventDefault();
-                                }}
-                              >
-                                +
-                              </button>
-                            </div>
-                          ))
-                        : null}
                     </form>
                   )}
 
