@@ -1,3 +1,4 @@
+var proxy = require("express-http-proxy");
 var express = require("express");
 var app = require("express")();
 var http = require("http").createServer(app);
@@ -20,6 +21,7 @@ app.use(
 app.use(bodyParser.json());
 
 app.use(express.static("public"));
+app.use("/api", proxy("localhost:8000"));
 
 function getId(length) {
   return crypto.randomBytes(length).toString("hex");
