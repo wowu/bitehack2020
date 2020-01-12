@@ -116,6 +116,11 @@ io.on("connection", function(socket) {
       }
     }
   });
+  socket.on("clearvotes", ({ roomId }) => {
+    for (let v of findRoom(roomId, { ideas: [] }).ideas) {
+      v.score = 0;
+    }
+  });
   socket.on("newIdea", function({ roomId, idea }) {
     console.log(`New idea in room ${roomId} - ${idea}`);
     for (var room of rooms) {
