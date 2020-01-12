@@ -5,6 +5,7 @@ import { RIEInput } from "riek";
 import createWhiteboard from "./Whiteboard";
 import Autosuggest from "react-autosuggest";
 import axios from "axios";
+import { debounce } from "lodash";
 
 import Card from "./Card";
 import KanbanImg from "../assets/kanban.png";
@@ -160,6 +161,18 @@ class Room extends Component {
     return string.trim().split(" ").length > 1;
   }
 
+  debouncedSuggestions = debounce(text => {
+    const endpointName = this.isSentence(text)
+      ? "proces_sentence"
+      : "similar_nouns";
+
+    axios.get(`/api/v1.0/${endpointName}/${text}`).then(({ data }) => {
+      this.setState({
+        suggestions: data.suggestions
+      });
+    });
+  }, 300);
+
   render() {
     const { ideas, ideaText, topic, mode, loading } = this.state;
     const master = this.master;
@@ -275,19 +288,21 @@ class Room extends Component {
                           value={ideaText}
                           onChange={e => {
                             this.setState({ ideaText: e.target.value });
+
                             const text = e.target.value;
+                            this.debouncedSuggestions(text);
 
-                            const endpointName = this.isSentence(text)
-                              ? "proces_sentence"
-                              : "similar_nouns";
+                            // const endpointName = this.isSentence(text)
+                            //   ? "proces_sentence"
+                            //   : "similar_nouns";
 
-                            axios
-                              .get(`/api/v1.0/${endpointName}/${text}`)
-                              .then(({ data }) => {
-                                this.setState({
-                                  suggestions: data.suggestions
-                                });
-                              });
+                            // axios
+                            //   .get(`/api/v1.0/${endpointName}/${text}`)
+                            //   .then(({ data }) => {
+                            //     this.setState({
+                            //       suggestions: data.suggestions
+                            //     });
+                            //   });
                           }}
                           style={{
                             borderTopLeftRadius: "1.078em",
