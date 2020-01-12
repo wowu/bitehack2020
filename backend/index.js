@@ -125,6 +125,11 @@ io.on("connection", function(socket) {
           idea,
           score: 0
         };
+
+        if (room.ideas.find(x => x.idea === idea.idea)) {
+          return;
+        }
+
         room.ideas.push(idea);
 
         for (var userInRoom of room.users) {
