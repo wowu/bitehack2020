@@ -44,6 +44,7 @@ function createNewWhiteBoard(width, height) {
 
   const svg = d3.create("svg");
   svg.node().classList.add("whiteboard");
+  svg.node().addEventListener("contextmenu", e => e.preventDefault());
   svg.attr("width", width);
   svg.attr("height", height);
   svg.attr("viewBox", [0, 0, width, height]);
