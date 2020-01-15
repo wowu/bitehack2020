@@ -2,15 +2,15 @@
 
 **Helping remote teams with counducting creative brainstorms leading to better decisions in shorter time.**
 
-Created by Random Dudes team for [BITEhack2020](https://www.bitehack.best.krakow.pl) hackathon.
+Created by Random Dudes team for [BITEhack2020](https://www.bitehack.best.krakow.pl) hackathon on January 11-12, 2020.
 
 ## Screenshots
 
-#### Landing page
+#### Landing page where you can create a brainstorming room
 
 ![Landing Page](screenshots/landing_page.png)
 
-#### Idea suggestions
+#### Brainstorm participants use their phones to add ideas
 
 ![Adding Ideas](screenshots/adding_ideas.png)
 
@@ -18,7 +18,7 @@ Created by Random Dudes team for [BITEhack2020](https://www.bitehack.best.krakow
 
 ![Brainstorm](screenshots/brainstorm.png)
 
-#### Voting
+#### Voting phase
 
 ![Voting](screenshots/voting.png)
 
