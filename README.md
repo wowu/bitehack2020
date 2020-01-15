@@ -14,7 +14,7 @@ Created by Random Dudes team for [BITEhack2020](https://www.bitehack.best.krakow
 
 ![Adding Ideas](screenshots/adding_ideas.png)
 
-#### All added ideas
+#### All added ideas are showing in real time on the master screen
 
 ![Brainstorm](screenshots/brainstorm.png)
 
