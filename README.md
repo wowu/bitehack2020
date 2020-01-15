@@ -4,6 +4,13 @@
 
 Created by Random Dudes team for [BITEhack2020](https://www.bitehack.best.krakow.pl) hackathon on January 11-12, 2020.
 
+## Team
+
+- [@amtlib](https://github.com/amtlib)
+- [@AndrzejPodo](https://github.com/AndrzejPodo)
+- [@Pan-Maciek](https://github.com/Pan-Maciek)
+- [@Wowu](https://github.com/Wowu)
+
 ## Screenshots
 
 #### Landing page where you can create a brainstorming room
